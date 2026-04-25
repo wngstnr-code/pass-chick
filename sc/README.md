@@ -1,4 +1,4 @@
-# Monad Game Contracts
+# Pass Chick Smart Contracts
 
 Smart contract package ini menyiapkan flow backend-authoritative untuk game ayam di Monad testnet.
 Semua kontrak deploy sebagai proxy UUPS (`ERC1967Proxy` + implementation terpisah):
@@ -13,11 +13,11 @@ Semua kontrak deploy sebagai proxy UUPS (`ERC1967Proxy` + implementation terpisa
 
 Proxy yang aktif dan sudah diverifikasi di MonadVision / Sourcify:
 
-- `GameUSDC`: `0xAeffBE902D7e5c53fba1CB08a343E5C077605B4f`
-- `USDCFaucet`: `0x35eCb74C54D3f2d1a7a4bFFd608B5598c39A63C7`
-- `GameVault`: `0x3e80F71d5FfcbB9A5507e97D8262BC866430cdDd`
-- `GameSettlement`: `0x2bE08dAe6C69ed133E5d91d0CE60bB54ad987e8F`
-- `TrustPassport`: deploy baru via script `DeployGameContracts.s.sol`
+- `GameUSDC`: `0x5631dF2e613141a4E57ca7BCD25e634825b16c7d`
+- `USDCFaucet`: `0x52E02a81D373f3597D2d696299CA1ca1B278dfeF`
+- `GameVault`: `0x45B893d50dfDC750Ab8d3696cAC5556A697153ca`
+- `GameSettlement`: `0xD1873ddd24Cf2C41192e11a87CC7d3026557dab8`
+- `TrustPassport`: `0x31029a59E40eb062f3C5D33AdFF8561F0549199e`
 
 ## Contracts
 

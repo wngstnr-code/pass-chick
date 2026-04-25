@@ -15,10 +15,10 @@ import { getActiveGameCount } from "./services/gameState.js";
 
 /**
  * ════════════════════════════════════════════════════════════
- * Chicken Monad — Backend Server
+ * Pass Chick — Backend Server
  * ════════════════════════════════════════════════════════════
  *
- * Express.js + Socket.io server for the Chicken Monad game.
+ * Express.js + Socket.io server for the Pass Chick game.
  *
  * Responsibilities:
  *   1. SIWE Authentication (wallet-based login)
@@ -100,7 +100,7 @@ const io = setupGameGateway(httpServer);
 httpServer.listen(env.PORT, "0.0.0.0", () => {
   console.log("");
   console.log("════════════════════════════════════════════════════");
-  console.log("  🐔 Chicken Monad Backend");
+  console.log("  🐔 Pass Chick Backend");
   console.log("════════════════════════════════════════════════════");
   console.log(`  HTTP Server:    http://localhost:${env.PORT}`);
   console.log(`  WebSocket:      ws://localhost:${env.PORT}`);

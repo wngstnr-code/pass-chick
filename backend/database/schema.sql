@@ -1,5 +1,5 @@
 -- ============================================================
--- Chicken Monad — Database Schema for Supabase
+-- Pass Chick — Database Schema for Supabase
 -- Copy-paste this entire file into Supabase SQL Editor and run.
 -- ============================================================
 

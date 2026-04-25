@@ -68,21 +68,21 @@ const ABOUT_FEATURES = [
     copy: "Connect, run, and feel the multiplier rise before the crash catches up.",
     tone: "risk",
     imageSrc: "/images/about-stakes.png",
-    imageAlt: "Chicken Monad arcade stakes preview",
+    imageAlt: "Pass Chick arcade stakes preview",
   },
   {
     title: "CHECKPOINT CASH OUTS",
     copy: "Cash out at checkpoints or keep pushing for a bigger payout.",
     tone: "checkpoint",
     imageSrc: "/images/about-stakes.png",
-    imageAlt: "Chicken Monad checkpoint cash out preview",
+    imageAlt: "Pass Chick checkpoint cash out preview",
   },
   {
     title: "MONAD WALLET FLOW",
     copy: "From faucet to deposit to live play, the Monad flow stays quick and simple.",
     tone: "wallet",
     imageSrc: "/images/about-stakes.png",
-    imageAlt: "Chicken Monad wallet flow preview",
+    imageAlt: "Pass Chick wallet flow preview",
   },
 ];
 
@@ -421,7 +421,7 @@ export default function Home() {
           <div className="home-brand-badge">GM</div>
           <div className="home-brand-copy">
             <p className="home-brand-eyebrow">Monad Arcade Risk Game</p>
-            <div className="home-brand-name">Chicken Monad</div>
+            <div className="home-brand-name">Pass Chick</div>
           </div>
         </div>
 
@@ -515,7 +515,7 @@ export default function Home() {
         <div className="home-shell home-shell-wide">
           <div className="home-hero-grid">
             <div className="home-hero-copy">
-              <h1 className="home-title">CHICKEN MONAD</h1>
+              <h1 className="home-title">PASS CHICK</h1>
               <p className="home-subcopy">
                 Cross the road, stack the multiplier, and cash out before the
                 run crashes.
@@ -586,10 +586,10 @@ export default function Home() {
         <div className="home-shell home-shell-section">
           <div className="home-about-head">
             <h2 className="home-section-title home-about-title">
-              WHAT IS CHICKEN MONAD?
+              WHAT IS PASS CHICK?
             </h2>
             <p className="home-about-copy">
-              Chicken Monad is a fast risk-reward demo where players cross
+              Pass Chick is a fast risk-reward demo where players cross
               lanes, stack multiplier, and choose when to cash out.
             </p>
           </div>
@@ -745,7 +745,7 @@ export default function Home() {
       <footer className="home-footer">
         <div className="home-shell home-footer-shell">
           <div>
-            <p className="home-preview-title">CHICKEN MONAD</p>
+            <p className="home-preview-title">PASS CHICK</p>
             <h3 className="home-footer-title">
               Fast arcade risk demo for Monad hackathon energy.
             </h3>

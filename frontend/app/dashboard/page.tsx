@@ -117,7 +117,7 @@ export default function DashboardPage() {
             <span className="home-brand-badge">GM</span>
             <span className="home-brand-copy">
               <p className="home-brand-eyebrow">Monad Arcade Risk Game</p>
-              <span className="home-brand-name">Chicken Monad</span>
+              <span className="home-brand-name">Pass Chick</span>
             </span>
           </a>
 
@@ -207,7 +207,7 @@ export default function DashboardPage() {
         </header>
 
         <div className="dashboard-center">
-          <div className="dashboard-title" aria-label="Chicken Monad">
+          <div className="dashboard-title" aria-label="Pass Chick">
             <span className="dashboard-title-line">CHICKEN</span>
             <span className="dashboard-title-line">MONAD</span>
           </div>

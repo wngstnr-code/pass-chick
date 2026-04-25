@@ -277,7 +277,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
       const domain = window.location.host;
       const origin = window.location.origin;
       const chainIdToUse = chainId || MONAD_CHAIN.chainIdDecimal || 10143;
-      const statement = "Sign in to Chicken Monad backend.";
+      const statement = "Sign in to Pass Chick backend.";
       const siweMessage = new SiweMessage({
         domain,
         address: account,

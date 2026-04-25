@@ -5,8 +5,8 @@ import { Web3Provider } from "../components/web3/Web3Provider";
 import { WalletProvider } from "../components/web3/WalletProvider";
 
 export const metadata: Metadata = {
-  title: "Crossy Chicken Bet | Monad Demo",
-  description: "Crossy chicken game with mock betting HUD on Next.js.",
+  title: "Pass Chick | Monad Demo",
+  description: "Pass Chick game with mock betting HUD on Next.js.",
 };
 
 export const viewport: Viewport = {
