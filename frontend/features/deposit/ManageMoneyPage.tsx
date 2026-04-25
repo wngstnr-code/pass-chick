@@ -59,8 +59,8 @@ export function ManageMoneyPage() {
     };
   }, []);
 
-  const returnHref = flow.isConnected ? "/dashboard" : "/";
-  const returnLabel = flow.isConnected ? "DASHBOARD" : "HOME";
+  const returnHref = "/";
+  const returnLabel = "HOME";
   const walletPreset = readQuickAmount(flow.walletBalanceDisplay);
   const vaultPreset = readQuickAmount(flow.availableBalanceDisplay);
 
@@ -175,10 +175,14 @@ export function ManageMoneyPage() {
             </div>
           </div>
           <h1 className="flow-title money-title">MANAGE MONEY</h1>
+          <p className="money-subtitle">
+            Mint faucet, deposit to vault, and withdraw your available balance.
+          </p>
         </header>
 
         <div className="money-grid">
           <section className="flow-status money-status-panel">
+            <p className="money-section-label">VAULT SNAPSHOT</p>
             <div className="money-status-grid">
               <div className="money-status-row">
                 <span>Wallet Status</span>
@@ -187,10 +191,6 @@ export function ManageMoneyPage() {
               <div className="money-status-row">
                 <span>Wallet Balance</span>
                 <strong>{flow.walletBalanceDisplay} USDC</strong>
-              </div>
-              <div className="money-status-row">
-                <span>Allowance</span>
-                <strong>{flow.allowanceDisplay} USDC</strong>
               </div>
               <div className="money-status-row">
                 <span>Vault Available</span>
@@ -208,15 +208,23 @@ export function ManageMoneyPage() {
           </section>
 
           <section className="money-action-panel">
-            {flow.configMessage ? (
-              <p className="flow-alert">{flow.configMessage}</p>
-            ) : null}
-            {flow.statusMessage ? (
-              <p className="flow-success">{flow.statusMessage}</p>
-            ) : null}
-            {flow.errorMessage ? (
-              <p className="flow-alert">{flow.errorMessage}</p>
-            ) : null}
+            <p className="money-section-label">ACTIONS</p>
+            <p className="money-helper">
+              Deposit adds to available vault balance. Withdraw only uses
+              available balance, not locked stake.
+            </p>
+
+            <div className="money-message-stack">
+              {flow.configMessage ? (
+                <p className="flow-alert">{flow.configMessage}</p>
+              ) : null}
+              {flow.statusMessage ? (
+                <p className="flow-success">{flow.statusMessage}</p>
+              ) : null}
+              {flow.errorMessage ? (
+                <p className="flow-alert">{flow.errorMessage}</p>
+              ) : null}
+            </div>
 
             <div className="money-amount-block">
               <label className="flow-label" htmlFor="money-amount-ui">

@@ -3235,16 +3235,16 @@ canvas.game {
   position: relative;
   z-index: 2;
   width: min(900px, 100%);
-  padding: 16px 18px 16px;
+  padding: 18px 20px 18px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .money-header {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 6px;
 }
 
 .money-head-top {
@@ -3300,58 +3300,68 @@ canvas.game {
   line-height: 0.92;
 }
 
+.money-subtitle {
+  margin: 0;
+  color: rgba(230, 240, 255, 0.82);
+  font-size: 9px;
+  line-height: 1.7;
+}
+
 .money-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  align-items: stretch;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 10px;
+  align-items: start;
 }
 
 .money-status-panel {
   margin-bottom: 0;
   height: 100%;
-  padding: 10px;
+  padding: 12px;
   display: flex;
   align-items: stretch;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.money-section-label {
+  margin: 0;
+  color: #ffe082;
+  font-size: 8px;
+  letter-spacing: 1.1px;
+  line-height: 1.3;
 }
 
 .money-status-grid {
   width: 100%;
   flex: 1 1 auto;
-}
-
-.money-status-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-  height: 100%;
-  align-content: stretch;
+  grid-template-columns: 1fr;
+  gap: 8px;
 }
 
 .money-status-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
+  align-items: center;
+  justify-content: space-between;
   gap: 4px;
-  min-height: 68px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  min-height: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .money-status-row span {
   color: rgba(221, 232, 255, 0.8);
-  font-size: 7px;
+  font-size: 8px;
   letter-spacing: 1px;
 }
 
 .money-status-row strong {
   color: #ffe066;
-  font-size: 8px;
-  text-align: left;
+  font-size: 9px;
+  text-align: right;
   line-height: 1.35;
   word-break: break-word;
 }
@@ -3359,12 +3369,18 @@ canvas.game {
 .money-action-panel {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 8px;
   min-height: 100%;
-  padding: 10px;
-  border-radius: 10px;
+  padding: 12px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.money-message-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .money-action-panel .flow-alert,
@@ -3375,7 +3391,7 @@ canvas.game {
 .money-amount-block {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 8px;
 }
 
 .money-input {
@@ -3387,7 +3403,7 @@ canvas.game {
 .money-quick-picks {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
 }
 
 .money-quick-pick {
@@ -3426,7 +3442,8 @@ canvas.game {
 .money-secondary-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+  gap: 8px;
+  margin-bottom: 2px;
 }
 
 .money-secondary-btn {
@@ -3452,16 +3469,17 @@ canvas.game {
   margin: 0;
   color: rgba(225, 235, 255, 0.78);
   font-size: 8px;
-  line-height: 1.5;
+  line-height: 1.7;
 }
 
 .money-panel-footer {
-  margin-top: auto;
+  margin-top: 8px;
   display: flex;
   flex-direction: column;
   width: 100%;
   gap: 6px;
-  padding-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .money-activity {
@@ -3500,9 +3518,9 @@ canvas.game {
 
 .money-footer-actions {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   width: 100%;
-  gap: 6px;
+  gap: 8px;
 }
 
 .money-panel-nav-btn {
@@ -3526,6 +3544,15 @@ canvas.game {
   .money-activity-list,
   .money-footer-actions {
     grid-template-columns: 1fr;
+  }
+
+  .money-status-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .money-status-row strong {
+    text-align: left;
   }
 
   .money-head-top {
@@ -4359,6 +4386,18 @@ canvas.game {
     0 10px 22px rgba(17, 8, 44, 0.34);
 }
 
+.home-hero-connected-actions {
+  width: min(340px, 90vw);
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.home-hero-connected-actions > * {
+  width: 100%;
+}
+
 .home-hero-back-btn {
   width: 100%;
   min-width: 0;
@@ -4636,6 +4675,28 @@ canvas.game {
 .home-section-social {
   padding-top: 30px;
   padding-bottom: 36px;
+  background:
+    radial-gradient(circle at 10% 15%, rgba(255, 210, 108, 0.06) 0%, rgba(255, 210, 108, 0) 32%),
+    linear-gradient(180deg, rgba(16, 28, 55, 0.98) 0%, rgba(11, 23, 47, 0.98) 100%);
+  border-top: 1px solid rgba(147, 214, 255, 0.16);
+}
+
+.home-section-system {
+  padding-top: 36px;
+  padding-bottom: 42px;
+  background:
+    radial-gradient(circle at 88% 12%, rgba(133, 227, 186, 0.08) 0%, rgba(133, 227, 186, 0) 36%),
+    linear-gradient(180deg, rgba(11, 23, 47, 0.98) 0%, rgba(14, 26, 53, 0.98) 100%);
+  border-top: 1px solid rgba(147, 214, 255, 0.14);
+}
+
+.home-section-passport {
+  padding-top: 30px;
+  padding-bottom: 50px;
+  background:
+    radial-gradient(circle at 16% 84%, rgba(164, 145, 255, 0.1) 0%, rgba(164, 145, 255, 0) 40%),
+    linear-gradient(180deg, rgba(14, 26, 53, 0.98) 0%, rgba(10, 20, 42, 0.98) 100%);
+  border-top: 1px solid rgba(147, 214, 255, 0.14);
 }
 
 .home-section-head {
@@ -4654,20 +4715,30 @@ canvas.game {
 
 .home-section-title {
   margin: 0;
-  color: #11223d;
+  color: #dff2ff;
   font-size: clamp(18px, 2.6vw, 28px);
   line-height: 1.35;
+  text-shadow: 0 6px 16px rgba(4, 10, 22, 0.32);
 }
 
 .home-section-title-social {
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.4px;
   text-align: center;
   margin-inline: auto;
+  color: #f2fbff;
+  text-shadow: 0 8px 20px rgba(5, 12, 26, 0.45);
 }
 
 .home-section-title-accent {
-  color: #b66215;
+  color: #ffd778;
+  text-shadow: 0 6px 14px rgba(50, 29, 5, 0.4);
+}
+
+.home-section-system .home-section-title,
+.home-section-passport .home-section-title {
+  color: #f2fbff;
+  text-shadow: 0 8px 20px rgba(5, 12, 26, 0.45);
 }
 
 .home-section-cta {
@@ -4683,29 +4754,32 @@ canvas.game {
 
 .home-feature-card {
   padding: 20px;
-  border-radius: 20px;
-  border: 1px solid rgba(17, 32, 61, 0.12);
-  background: rgba(246, 251, 255, 0.9);
-  box-shadow: 0 18px 26px rgba(23, 50, 92, 0.08);
+  border-radius: 14px;
+  border: 2px solid rgba(137, 202, 255, 0.55);
+  background:
+    linear-gradient(180deg, rgba(14, 25, 49, 0.95) 0%, rgba(19, 33, 63, 0.95) 100%);
+  box-shadow:
+    4px 4px 0 rgba(6, 13, 26, 0.46),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .home-feature-card p {
   margin: 0 0 10px;
   font-size: 8px;
   letter-spacing: 1px;
-  color: #486289;
+  color: rgba(255, 223, 126, 0.92);
 }
 
 .home-feature-card h3 {
   margin: 0 0 10px;
-  color: #11223d;
+  color: #ffffff;
   font-size: 12px;
   line-height: 1.65;
 }
 
 .home-feature-card span {
   display: block;
-  color: #465b7b;
+  color: rgba(224, 238, 255, 0.86);
   font-size: 9px;
   line-height: 1.8;
 }
@@ -4728,6 +4802,12 @@ canvas.game {
   margin: 0;
   font-size: 12px;
   line-height: 1.7;
+}
+
+.home-money-band p {
+  margin: 6px 0 0;
+  font-size: 9px;
+  line-height: 1.8;
 }
 
 .home-money-band p:last-child {
@@ -4799,6 +4879,38 @@ canvas.game {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+}
+
+.home-integration-note {
+  margin-top: 18px;
+  border-radius: 14px;
+  border: 2px solid rgba(137, 202, 255, 0.42);
+  background:
+    linear-gradient(180deg, rgba(12, 21, 42, 0.9) 0%, rgba(8, 17, 36, 0.9) 100%);
+  box-shadow:
+    4px 4px 0 rgba(6, 13, 26, 0.44),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  padding: 16px 18px;
+}
+
+.home-integration-note h3 {
+  margin: 0 0 10px;
+  color: #ffffff;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.home-integration-note ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.home-integration-note li {
+  color: rgba(224, 238, 255, 0.85);
+  font-size: 9px;
+  line-height: 1.75;
 }
 
 .home-social-card {
@@ -4882,6 +4994,7 @@ canvas.game {
 
 .home-footer {
   padding: 0;
+  width: 100%;
 }
 
 .home-footer-shell {
@@ -4895,6 +5008,16 @@ canvas.game {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: none;
   box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.home-footer .home-shell {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  gap: 0;
 }
 
 .home-footer-title {
@@ -5192,6 +5315,13 @@ canvas.game {
     padding-bottom: 52px;
   }
 
+  .home-section-social,
+  .home-section-system,
+  .home-section-passport {
+    padding-top: 28px;
+    padding-bottom: 36px;
+  }
+
   .home-about-copy {
     font-size: 9px;
   }
@@ -5215,7 +5345,15 @@ canvas.game {
   }
 
   .home-social-stats {
-    grid-template-columns: 1fr;
+    width: 100%;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .home-social-stat {
+    width: 100%;
+    padding: 0;
+    border-right: 0;
   }
 
   .home-action-stack-inline {
