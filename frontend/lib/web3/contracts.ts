@@ -8,6 +8,8 @@ export const USDC_FAUCET_ADDRESS: string =
 export const GAME_VAULT_ADDRESS: string = process.env.NEXT_PUBLIC_GAME_VAULT_ADDRESS || "";
 export const GAME_SETTLEMENT_ADDRESS: string =
   process.env.NEXT_PUBLIC_GAME_SETTLEMENT_ADDRESS || "";
+export const TRUST_PASSPORT_ADDRESS: string =
+  process.env.NEXT_PUBLIC_TRUST_PASSPORT_ADDRESS || "";
 
 export const ERC20_ABI = [
   {
@@ -129,6 +131,48 @@ export const USDC_FAUCET_ABI = [
   },
 ] as const;
 
+export const TRUST_PASSPORT_ABI = [
+  {
+    type: "function",
+    name: "getPassport",
+    stateMutability: "view",
+    inputs: [{ name: "player", type: "address" }],
+    outputs: [
+      { name: "tier", type: "uint8" },
+      { name: "issuedAt", type: "uint64" },
+      { name: "expiry", type: "uint64" },
+      { name: "revoked", type: "bool" },
+    ],
+  },
+  {
+    type: "function",
+    name: "isPassportValid",
+    stateMutability: "view",
+    inputs: [{ name: "player", type: "address" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "claimWithSignature",
+    stateMutability: "nonpayable",
+    inputs: [
+      {
+        name: "claim",
+        type: "tuple",
+        components: [
+          { name: "player", type: "address" },
+          { name: "tier", type: "uint8" },
+          { name: "issuedAt", type: "uint64" },
+          { name: "expiry", type: "uint64" },
+          { name: "nonce", type: "uint256" },
+        ],
+      },
+      { name: "signature", type: "bytes" },
+    ],
+    outputs: [],
+  },
+] as const;
+
 export function hasDepositContractConfig() {
   return Boolean(
     isAddress(USDC_ADDRESS) &&
@@ -143,4 +187,8 @@ export function hasGameContractConfig() {
       isAddress(GAME_VAULT_ADDRESS) &&
       isAddress(GAME_SETTLEMENT_ADDRESS)
   );
+}
+
+export function hasPassportContractConfig() {
+  return Boolean(isAddress(TRUST_PASSPORT_ADDRESS));
 }

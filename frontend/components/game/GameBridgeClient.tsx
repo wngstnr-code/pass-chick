@@ -738,8 +738,7 @@ export function GameBridgeClient({
         return inFlight.promise;
       }
 
-      let task: Promise<string>;
-      task = (async () => {
+      const task = (async () => {
         try {
           const value = await readContractWithRetry(
             () =>
@@ -773,7 +772,11 @@ export function GameBridgeClient({
           }
           throw error;
         } finally {
-          if (activeSessionInFlightRef.current.promise === task) {
+          const currentInFlight = activeSessionInFlightRef.current;
+          if (
+            currentInFlight.address &&
+            currentInFlight.address.toLowerCase() === address.toLowerCase()
+          ) {
             activeSessionInFlightRef.current = { address: null, promise: null };
           }
         }
