@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { getSession } from "../services/sessionStore.ts";
+import { getSession } from "../services/sessionStore.js";
 import cookie from "cookie";
 
 // Extend Express Request to include wallet address

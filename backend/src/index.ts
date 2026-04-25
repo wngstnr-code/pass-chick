@@ -1,69 +1,136 @@
-import express, { Request, Response } from 'express';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
-import cors from 'cors';
-import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
-import dotenv from 'dotenv';
+import { createServer } from "node:http";
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import cookieParser from "cookie-parser";
+import { env } from "./config/env.js";
+import { setupGameGateway } from "./gateway/gameGateway.js";
+import { startBlockchainListener } from "./services/blockchainListener.js";
+import authRoutes from "./routes/auth.js";
+import gameRoutes from "./routes/game.js";
+import leaderboardRoutes from "./routes/leaderboard.js";
+import playerRoutes from "./routes/player.js";
+import passportRoutes from "./routes/passport.js";
+import { getActiveGameCount } from "./services/gameState.js";
 
-// 1. Load environment variables dari file .env
-dotenv.config();
+/**
+ * ════════════════════════════════════════════════════════════
+ * Chicken Monad — Backend Server
+ * ════════════════════════════════════════════════════════════
+ *
+ * Express.js + Socket.io server for the Chicken Monad game.
+ *
+ * Responsibilities:
+ *   1. SIWE Authentication (wallet-based login)
+ *   2. WebSocket Game Gateway (real-time game validation)
+ *   3. Anti-cheat (speed hack detection, server-authoritative timer)
+ *   4. Cryptographic payout signature (EIP-712)
+ *   5. Blockchain event listener (deposit/withdraw tracking)
+ *   6. REST API (leaderboard, game history, player stats)
+ */
 
-// 2. Inisialisasi Express & HTTP Server
+// ── Express App ──────────────────────────────────────────────
+
 const app = express();
-const port = process.env.PORT || 3000;
-const httpServer = createServer(app); // Membungkus Express dengan HTTP Server agar Socket.io bisa berjalan
+app.set("trust proxy", 1); // Trust first proxy (Railway)
 
-// 3. Setup Socket.io untuk fitur Real-time
-const io = new Server(httpServer, {
-  cors: {
-    origin: process.env.FRONTEND_URL || '*', // Nantinya ganti '*' dengan URL Frontend kamu demi keamanan
-    methods: ['GET', 'POST'],
-    credentials: true
-  }
-});
+// Security middleware
+app.use(
+  helmet({
+    // Allow Socket.io connections
+    contentSecurityPolicy: false,
+  })
+);
 
-// 4. Middlewares
-app.use(helmet()); // Menambahkan header keamanan dasar (Wajib untuk produksi)
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true
-})); // Mengizinkan akses dari Frontend
-app.use(express.json()); // Agar bisa membaca body request berformat JSON
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser()); // Agar bisa mengelola cookie (penting untuk SIWE/Autentikasi nanti)
+// CORS — allow frontend origin with credentials (cookies)
+app.use(
+  cors({
+    origin: env.FRONTEND_URL,
+    credentials: true,
+  })
+);
 
-// 5. REST API Routes Dasar
-app.get('/', (req: Request, res: Response) => {
+// Body parsers
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Cookie parser
+app.use(cookieParser());
+
+// ── Routes ───────────────────────────────────────────────────
+
+// Health check
+app.get("/health", (_req, res) => {
   res.json({
-    status: 'success',
-    message: '🚀 Welcome to Chicken Monad Backend API!'
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    activeGames: getActiveGameCount(),
   });
 });
 
-app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+// Auth routes (SIWE)
+app.use("/auth", authRoutes);
+
+// Game REST routes
+app.use("/api/game", gameRoutes);
+
+// Leaderboard (public)
+app.use("/api/leaderboard", leaderboardRoutes);
+
+// Player stats
+app.use("/api/player", playerRoutes);
+
+// Trust passport
+app.use("/api/passport", passportRoutes);
+
+// 404 fallback
+app.use((_req, res) => {
+  res.status(404).json({ error: "Not found" });
 });
 
-// 6. Socket.io Event Listeners
-io.on('connection', (socket) => {
-  console.log(`🟢 Client connected: ${socket.id}`);
+// ── HTTP Server + Socket.io ──────────────────────────────────
 
-  // Contoh mendengarkan pesan dari client
-  socket.on('ping', () => {
-    socket.emit('pong', { message: 'Hello from Chicken Monad Server!' });
-  });
+const httpServer = createServer(app);
 
-  socket.on('disconnect', () => {
-    console.log(`🔴 Client disconnected: ${socket.id}`);
+// Setup WebSocket game gateway on the same HTTP server
+const io = setupGameGateway(httpServer);
+
+// ── Start ────────────────────────────────────────────────────
+
+httpServer.listen(env.PORT, "0.0.0.0", () => {
+  console.log("");
+  console.log("════════════════════════════════════════════════════");
+  console.log("  🐔 Chicken Monad Backend");
+  console.log("════════════════════════════════════════════════════");
+  console.log(`  HTTP Server:    http://localhost:${env.PORT}`);
+  console.log(`  WebSocket:      ws://localhost:${env.PORT}`);
+  console.log(`  Health Check:   http://localhost:${env.PORT}/health`);
+  console.log(`  Frontend CORS:  ${env.FRONTEND_URL}`);
+  console.log("════════════════════════════════════════════════════");
+  console.log("");
+
+  // Start blockchain event listener (non-blocking)
+  startBlockchainListener().catch((err: unknown) => {
+    console.error("⚠️  Blockchain listener failed to start:", err);
+    console.log("   Backend continues without blockchain events.");
   });
 });
 
-// 7. Start Server
-httpServer.listen(port, () => {
-  console.log(`
-===========================================
-🚀 Server berjalan di: http://localhost:${port}
-===========================================
-  `);
+// ── Graceful Shutdown ────────────────────────────────────────
+
+process.on("SIGINT", () => {
+  console.log("\n🛑 Shutting down gracefully...");
+  io.close();
+  httpServer.close(() => {
+    console.log("✅ Server closed.");
+    process.exit(0);
+  });
+});
+
+process.on("SIGTERM", () => {
+  console.log("\n🛑 SIGTERM received. Shutting down...");
+  io.close();
+  httpServer.close(() => {
+    process.exit(0);
+  });
 });
