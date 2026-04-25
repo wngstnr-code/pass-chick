@@ -1,5 +1,10 @@
 import "dotenv/config";
 
+/**
+ * Validated environment configuration.
+ * Fails fast at startup if required variables are missing.
+ */
+
 function requireEnv(key: string, fallback?: string): string {
   const value = process.env[key] ?? fallback;
   if (!value) {
@@ -34,6 +39,7 @@ export const env = {
   // Smart Contract
   GAME_VAULT_ADDRESS: optionalEnv("GAME_VAULT_ADDRESS", "0x0000000000000000000000000000000000000000"),
   GAME_SETTLEMENT_ADDRESS: optionalEnv("GAME_SETTLEMENT_ADDRESS", "0x0000000000000000000000000000000000000000"),
+  TRUST_PASSPORT_ADDRESS: optionalEnv("TRUST_PASSPORT_ADDRESS", "0x0000000000000000000000000000000000000000"),
 
   // Backend Signer
   BACKEND_PRIVATE_KEY: optionalEnv(
@@ -43,6 +49,8 @@ export const env = {
 
   // Settlement
   SETTLEMENT_SIGNATURE_TTL_SECONDS: parseInt(optionalEnv("SETTLEMENT_SIGNATURE_TTL_SECONDS", "86400"), 10),
+  PASSPORT_SIGNATURE_TTL_SECONDS: parseInt(optionalEnv("PASSPORT_SIGNATURE_TTL_SECONDS", "900"), 10),
+  PASSPORT_VALIDITY_SECONDS: parseInt(optionalEnv("PASSPORT_VALIDITY_SECONDS", "2592000"), 10),
 } as const;
 
 // Log config status on import (non-sensitive)
@@ -54,3 +62,4 @@ console.log(`   Monad RPC: ${env.MONAD_RPC_URL}`);
 console.log(`   Chain ID: ${env.MONAD_CHAIN_ID}`);
 console.log(`   Vault: ${env.GAME_VAULT_ADDRESS.substring(0, 10)}...`);
 console.log(`   Settlement: ${env.GAME_SETTLEMENT_ADDRESS.substring(0, 10)}...`);
+console.log(`   Passport: ${env.TRUST_PASSPORT_ADDRESS.substring(0, 10)}...`);
