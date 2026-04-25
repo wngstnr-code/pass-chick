@@ -7,12 +7,22 @@ import {GameUSDC} from "../src/GameUSDC.sol";
 import {USDCFaucet} from "../src/USDCFaucet.sol";
 import {GameVault} from "../src/GameVault.sol";
 import {GameSettlement} from "../src/GameSettlement.sol";
+import {TrustPassport} from "../src/TrustPassport.sol";
 
 contract DeployGameContracts is Script {
     uint256 internal constant DEFAULT_FAUCET_CLAIM_AMOUNT = 100 * 1e6;
     uint64 internal constant DEFAULT_SESSION_EXPIRY_DELAY = 1 days;
 
-    function run() external returns (GameUSDC token, USDCFaucet faucet, GameVault vault, GameSettlement settlement) {
+    function run()
+        external
+        returns (
+            GameUSDC token,
+            USDCFaucet faucet,
+            GameVault vault,
+            GameSettlement settlement,
+            TrustPassport passport
+        )
+    {
         uint256 privateKey = vm.envOr("PRIVATE_KEY", uint256(0));
         uint256 claimAmount = vm.envOr("USDC_FAUCET_CLAIM_AMOUNT", DEFAULT_FAUCET_CLAIM_AMOUNT);
         address initialOwner = vm.envOr("INITIAL_OWNER", address(0));
@@ -69,6 +79,16 @@ contract DeployGameContracts is Script {
             )
         );
 
+        TrustPassport passportImplementation = new TrustPassport();
+        passport = TrustPassport(
+            address(
+                new ERC1967Proxy(
+                    address(passportImplementation),
+                    abi.encodeCall(TrustPassport.initialize, (initialOwner, backendSigner))
+                )
+            )
+        );
+
         token.setMinter(address(faucet), true);
         vault.setSettlement(address(settlement));
 
@@ -81,12 +101,15 @@ contract DeployGameContracts is Script {
         console2.log("USDCFaucet implementation:", address(faucetImplementation));
         console2.log("GameVault implementation:", address(vaultImplementation));
         console2.log("GameSettlement implementation:", address(settlementImplementation));
+        console2.log("TrustPassport implementation:", address(passportImplementation));
         console2.log("GameUSDC proxy:", address(token));
         console2.log("USDCFaucet proxy:", address(faucet));
         console2.log("GameVault proxy:", address(vault));
         console2.log("GameSettlement proxy:", address(settlement));
+        console2.log("TrustPassport proxy:", address(passport));
         console2.log("NEXT_PUBLIC_USDC_ADDRESS=%s", address(token));
         console2.log("NEXT_PUBLIC_GAME_VAULT_ADDRESS=%s", address(vault));
         console2.log("NEXT_PUBLIC_GAME_SETTLEMENT_ADDRESS=%s", address(settlement));
+        console2.log("NEXT_PUBLIC_TRUST_PASSPORT_ADDRESS=%s", address(passport));
     }
 }
