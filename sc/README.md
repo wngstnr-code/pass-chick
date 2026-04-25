@@ -7,6 +7,7 @@ Semua kontrak deploy sebagai proxy UUPS (`ERC1967Proxy` + implementation terpisa
 - `USDCFaucet`: faucet bootstrap dana testnet
 - `GameVault`: custody layer dengan `available`, `locked`, dan `treasury`
 - `GameSettlement`: session manager yang memverifikasi EIP-712 signature dari backend
+- `TrustPassport`: credential onchain (tier + expiry) untuk anti-bot / proof-of-human flow
 
 ## Current Testnet Deployment
 
@@ -16,6 +17,7 @@ Proxy yang aktif dan sudah diverifikasi di MonadVision / Sourcify:
 - `USDCFaucet`: `0x35eCb74C54D3f2d1a7a4bFFd608B5598c39A63C7`
 - `GameVault`: `0x3e80F71d5FfcbB9A5507e97D8262BC866430cdDd`
 - `GameSettlement`: `0x2bE08dAe6C69ed133E5d91d0CE60bB54ad987e8F`
+- `TrustPassport`: deploy baru via script `DeployGameContracts.s.sol`
 
 ## Contracts
 
@@ -86,6 +88,7 @@ Minimal yang dibutuhkan untuk broadcast hanyalah `MONAD_RPC_URL` dan `PRIVATE_KE
 `BACKEND_SIGNER` opsional. Jika tidak diisi, deploy script memakai `INITIAL_OWNER`.
 `SESSION_EXPIRY_DELAY` opsional. Default-nya `86400` detik atau `1 hari`.
 `GAME_SETTLEMENT_ADDRESS` dan `NEW_BACKEND_SIGNER` dipakai saat kamu ingin mengganti signer backend setelah deploy.
+`TRUST_PASSPORT_ADDRESS` opsional untuk ikut mengganti signer backend pada kontrak passport.
 
 ## Commands
 
@@ -148,6 +151,7 @@ FOUNDRY_PROFILE=monad_vision forge script script/DeployGameContracts.s.sol:Deplo
 Script deploy akan:
 
 - deploy implementation `GameUSDC`, `USDCFaucet`, `GameVault`, `GameSettlement`
+- deploy implementation `TrustPassport`
 - deploy proxy UUPS untuk masing-masing kontrak
 - grant minter role dari token ke faucet
 - set `GameSettlement` sebagai operator resmi di `GameVault`
@@ -159,6 +163,7 @@ Output penting untuk frontend:
 NEXT_PUBLIC_USDC_ADDRESS=<deployed_game_usdc>
 NEXT_PUBLIC_GAME_VAULT_ADDRESS=<deployed_game_vault>
 NEXT_PUBLIC_GAME_SETTLEMENT_ADDRESS=<deployed_game_settlement>
+NEXT_PUBLIC_TRUST_PASSPORT_ADDRESS=<deployed_trust_passport>
 ```
 
 Alamat yang dipakai frontend adalah alamat proxy, bukan implementation.
@@ -244,6 +249,7 @@ Pastikan `PRIVATE_KEY` yang dipakai adalah owner kontrak `GameSettlement`.
 - `NEXT_PUBLIC_USDC_ADDRESS`
 - `NEXT_PUBLIC_GAME_VAULT_ADDRESS`
 - `NEXT_PUBLIC_GAME_SETTLEMENT_ADDRESS`
+- `NEXT_PUBLIC_TRUST_PASSPORT_ADDRESS`
 
 Frontend deposit dan game flow nantinya bisa memakai urutan:
 
