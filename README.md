@@ -1,13 +1,17 @@
 # Pass Chick
 
-Pass Chick adalah game arcade risk-reward di Monad testnet dengan flow backend-authoritative.
-Repo ini dibagi menjadi tiga bagian utama:
+Pass Chick is a risk-reward arcade game built on Monad testnet with a backend-authoritative game flow.
+This repository is split into three main packages:
 
-- `frontend/`: Next.js app untuk wallet connect, deposit, play, cashout, dan passport UI
-- `backend/`: Express + Socket.io server untuk SIWE auth, game session, settlement signing, dan API player
-- `sc/`: smart contracts Foundry untuk token mock, vault, settlement, faucet, dan trust passport
+- `frontend/`: Next.js app for wallet connect, deposit, gameplay, cashout, and passport UX
+- `backend/`: Express + Socket.io server for SIWE auth, game sessions, settlement signing, and player APIs
+- `sc/`: Foundry smart contracts for the mock token, faucet, vault, settlement, and trust passport
 
-## Repo Structure
+## Live Deployment
+
+- App: https://pass-chick.vercel.app/
+
+## Repository Structure
 
 ```text
 .
@@ -16,7 +20,7 @@ Repo ini dibagi menjadi tiga bagian utama:
 └── sc/
 ```
 
-README per bagian:
+Package-level docs:
 
 - [frontend/README.md](./frontend/README.md)
 - [backend/README.md](./backend/README.md)
@@ -24,7 +28,7 @@ README per bagian:
 
 ## Current Testnet Contracts
 
-Alamat proxy yang dipakai app saat ini:
+The app currently points to these proxy addresses:
 
 - `GameUSDC`: `0x5631dF2e613141a4E57ca7BCD25e634825b16c7d`
 - `USDCFaucet`: `0x52E02a81D373f3597D2d696299CA1ca1B278dfeF`
@@ -34,9 +38,9 @@ Alamat proxy yang dipakai app saat ini:
 
 ## Local Development
 
-Jalankan tiap package di terminal terpisah.
+Run each package in a separate terminal.
 
-### 1. Frontend
+### Frontend
 
 ```bash
 cd frontend
@@ -48,7 +52,7 @@ Default URL:
 
 - `http://localhost:3000`
 
-### 2. Backend
+### Backend
 
 ```bash
 cd backend
@@ -60,7 +64,7 @@ Default URL:
 
 - `http://localhost:8000`
 
-### 3. Smart Contracts
+### Smart Contracts
 
 ```bash
 cd sc
@@ -70,10 +74,10 @@ forge test --offline
 
 ## Environment Notes
 
-Hal penting yang perlu sinkron antar package:
+These values need to stay in sync across packages:
 
 - `frontend/.env`
-  - contract address proxy terbaru
+  - latest proxy addresses
   - `NEXT_PUBLIC_BACKEND_API_URL`
   - `NEXT_PUBLIC_REOWN_PROJECT_ID`
 - `backend/.env`
@@ -85,11 +89,11 @@ Hal penting yang perlu sinkron antar package:
 - `sc/.env`
   - deployer key
   - owner
-  - signer backend
-  - target address untuk rotation / upgrade script
+  - backend signer
+  - target addresses for signer rotation or upgrades
 
 ## Important Notes
 
-- Branding project sudah diganti ke `Pass Chick` di layer app/docs.
-- Domain EIP-712 smart contract tidak ikut diubah agar kompatibilitas deployment live tetap aman.
-- Public Monad RPC bisa kena rate limit. Untuk gameplay yang lebih stabil, gunakan RPC provider yang lebih longgar atau dedicated.
+- The product branding has been updated to `Pass Chick` in the app and docs layers.
+- The onchain EIP-712 domain names were intentionally left unchanged to preserve compatibility with the live deployment.
+- Public Monad RPC endpoints can be rate-limited. For more stable gameplay, use a stronger or dedicated RPC provider.

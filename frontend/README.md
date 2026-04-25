@@ -1,14 +1,17 @@
 # Pass Chick Frontend
 
-Frontend Pass Chick dibangun dengan Next.js dan menjadi UI utama untuk:
+The Pass Chick frontend is a Next.js application that handles:
 
-- connect wallet
-- SIWE auth ke backend
-- claim faucet
-- deposit ke vault
-- start run
-- cashout / settle
-- trust passport flow
+- wallet connection
+- SIWE authentication against the backend
+- faucet claim
+- vault deposit
+- gameplay start and cashout
+- trust passport UX
+
+## Live Deployment
+
+- App: https://pass-chick.vercel.app/
 
 ## Stack
 
@@ -30,9 +33,7 @@ npm run start
 
 ## Required Environment
 
-Contoh file ada di `frontend/.env.example`.
-
-Minimal env yang dipakai:
+Example values live in `frontend/.env.example`.
 
 ```bash
 NEXT_PUBLIC_MONAD_CHAIN_ID=0x279F
@@ -56,14 +57,10 @@ NEXT_PUBLIC_REOWN_PROJECT_ID=your_reown_project_id
 
 ## Current Local Defaults
 
-Repo ini saat ini memakai:
-
 - frontend app: `http://localhost:3000`
 - backend API: `http://localhost:8000`
 
 ## Current Contract Wiring
-
-Alamat proxy yang dipakai frontend saat ini:
 
 - `NEXT_PUBLIC_USDC_ADDRESS=0x5631dF2e613141a4E57ca7BCD25e634825b16c7d`
 - `NEXT_PUBLIC_USDC_FAUCET_ADDRESS=0x52E02a81D373f3597D2d696299CA1ca1B278dfeF`
@@ -73,33 +70,31 @@ Alamat proxy yang dipakai frontend saat ini:
 
 ## Common Issues
 
-### Wallet connect gagal
+### Wallet connection fails
 
-Cek:
+Check:
 
-- `NEXT_PUBLIC_REOWN_PROJECT_ID` valid
-- wallet sudah switch ke Monad Testnet
-- frontend sudah di-restart setelah perubahan `.env`
+- `NEXT_PUBLIC_REOWN_PROJECT_ID` is valid
+- the wallet is switched to Monad Testnet
+- the frontend was restarted after `.env` changes
 
-### Auth backend gagal
+### Backend auth fails
 
-Cek:
+Check:
 
-- backend hidup di `http://localhost:8000`
-- `NEXT_PUBLIC_BACKEND_API_URL` sesuai
-- `FRONTEND_URL` di backend cocok dengan origin frontend
+- the backend is running on `http://localhost:8000`
+- `NEXT_PUBLIC_BACKEND_API_URL` matches the actual backend URL
+- `FRONTEND_URL` in the backend matches the frontend origin
 
-### RPC rate limit
+### RPC rate limits
 
-Kalau muncul error seperti `requests limited to 15/sec`, itu berasal dari RPC publik Monad.
-Solusi paling baik adalah memakai RPC provider yang lebih kuat untuk frontend dan backend.
+If you see errors such as `requests limited to 15/sec`, the issue comes from the public Monad RPC.
+The best fix is to use a stronger RPC provider for both frontend and backend.
 
-## Build Status
-
-Frontend saat ini bisa di-build dengan:
+## Build
 
 ```bash
 npm run build
 ```
 
-Warning Reown saat build di environment tanpa akses internet masih bisa muncul, tapi itu bukan kegagalan compile app.
+Reown warnings can still appear during build in restricted environments, but they do not necessarily mean the frontend failed to compile.

@@ -1,16 +1,16 @@
 # Pass Chick Backend
 
-Backend Pass Chick menangani flow server-authoritative untuk game dan auth.
+The Pass Chick backend powers the server-authoritative game flow and authentication.
 
-Tanggung jawab utama:
+Main responsibilities:
 
 - SIWE authentication
 - session cookie management
-- realtime game loop via Socket.io
+- real-time gameplay over Socket.io
 - settlement signing
-- settlement relaying onchain
-- leaderboard / player API
-- trust passport eligibility dan signature issuance
+- onchain settlement relaying
+- leaderboard and player APIs
+- trust passport eligibility and signature issuance
 
 ## Stack
 
@@ -31,16 +31,14 @@ npm run start
 
 ## Runtime
 
-Default local config:
+Default local setup:
 
 - backend URL: `http://localhost:8000`
 - expected frontend origin: `http://localhost:3000`
 
 ## Required Environment
 
-Backend membaca env dari `backend/.env`.
-
-Field utama:
+The backend reads values from `backend/.env`.
 
 ```bash
 PORT=8000
@@ -67,16 +65,14 @@ PASSPORT_VALIDITY_SECONDS=2592000
 
 ## Current Contract Wiring
 
-Alamat proxy yang dipakai backend saat ini:
-
 - `GAME_VAULT_ADDRESS=0x45B893d50dfDC750Ab8d3696cAC5556A697153ca`
 - `GAME_SETTLEMENT_ADDRESS=0xD1873ddd24Cf2C41192e11a87CC7d3026557dab8`
 - `TRUST_PASSPORT_ADDRESS=0x31029a59E40eb062f3C5D33AdFF8561F0549199e`
 
-Backend signer saat ini harus sinkron dengan signer onchain untuk:
+The backend signer must stay in sync with the onchain signer used by:
 
-- settlement signature
-- passport signature
+- settlement signatures
+- passport signatures
 
 ## Important Routes
 
@@ -87,7 +83,7 @@ Auth:
 - `POST /auth/logout`
 - `GET /auth/me`
 
-Game / player:
+Game and player:
 
 - `GET /api/game/active`
 - `GET /api/game/pending-settlement`
@@ -106,27 +102,27 @@ Health:
 
 ## Common Issues
 
-### Frontend tidak bisa auth
+### Frontend cannot authenticate
 
-Cek:
+Check:
 
-- backend benar-benar hidup di port yang sama dengan `NEXT_PUBLIC_BACKEND_API_URL`
-- `FRONTEND_URL` backend cocok dengan origin frontend
-- browser mengizinkan cookie untuk local dev flow
+- the backend is actually running on the same URL configured in `NEXT_PUBLIC_BACKEND_API_URL`
+- `FRONTEND_URL` matches the deployed or local frontend origin
+- the browser accepts cookies for the current environment
 
-### Cashout gagal
+### Cashout fails
 
-Penyebab umum:
+Common causes:
 
-- relayer backend kehabisan `MON` untuk gas
-- RPC Monad gagal / rate limit
-- signer backend tidak cocok dengan `backendSigner` onchain
-- treasury vault tidak cukup untuk payout
+- the backend relayer ran out of `MON` for gas
+- Monad RPC failed or was rate-limited
+- the backend signer does not match the onchain `backendSigner`
+- the vault treasury is not large enough for the payout
 
-Backend sekarang sudah memetakan error settlement ke pesan yang lebih spesifik agar debugging lebih mudah.
+The backend maps settlement failures into more specific messages to make debugging easier.
 
 ## Database
 
-Schema Supabase ada di:
+Supabase schema:
 
 - [database/schema.sql](./database/schema.sql)

@@ -1,17 +1,19 @@
 # Pass Chick Smart Contracts
 
-Smart contract package ini menyiapkan flow backend-authoritative untuk game ayam di Monad testnet.
-Semua kontrak deploy sebagai proxy UUPS (`ERC1967Proxy` + implementation terpisah):
+This package contains the backend-authoritative onchain flow for Pass Chick on Monad testnet.
+All contracts are deployed as UUPS proxies (`ERC1967Proxy` + separate implementations).
 
-- `GameUSDC`: mock USDC dengan 6 desimal
-- `USDCFaucet`: faucet bootstrap dana testnet
-- `GameVault`: custody layer dengan `available`, `locked`, dan `treasury`
-- `GameSettlement`: session manager yang memverifikasi EIP-712 signature dari backend
-- `TrustPassport`: credential onchain (tier + expiry) untuk anti-bot / proof-of-human flow
+Included contracts:
+
+- `GameUSDC`: mock USDC with 6 decimals
+- `USDCFaucet`: testnet bootstrap faucet
+- `GameVault`: custody layer for available, locked, and treasury balances
+- `GameSettlement`: session manager that verifies backend EIP-712 signatures
+- `TrustPassport`: onchain credential for anti-bot / proof-of-human style flows
 
 ## Current Testnet Deployment
 
-Proxy yang aktif dan sudah diverifikasi di MonadVision / Sourcify:
+Verified proxy addresses:
 
 - `GameUSDC`: `0x5631dF2e613141a4E57ca7BCD25e634825b16c7d`
 - `USDCFaucet`: `0x52E02a81D373f3597D2d696299CA1ca1B278dfeF`
@@ -19,58 +21,53 @@ Proxy yang aktif dan sudah diverifikasi di MonadVision / Sourcify:
 - `GameSettlement`: `0xD1873ddd24Cf2C41192e11a87CC7d3026557dab8`
 - `TrustPassport`: `0x31029a59E40eb062f3C5D33AdFF8561F0549199e`
 
-## Contracts
+## Contract Summary
 
 ### GameUSDC
 
 - Name: `Mock USD Coin`
 - Symbol: `USDC`
 - Decimals: `6`
-- Tidak ada initial supply
-- Hanya address yang di-set sebagai minter yang bisa memanggil `mint`
-- Upgradeable via UUPS, owner proxy berwenang melakukan upgrade
+- No initial supply
+- Only approved minters can call `mint`
+- Upgradeable through UUPS
 
 ### USDCFaucet
 
-- `claim()` mint `100 * 10^6` ke caller
-- Tanpa cooldown
-- Owner bisa `pause`, `unpause`, dan `setClaimAmount`
-- Upgradeable via UUPS
+- `claim()` mints `100 * 10^6` to the caller
+- No cooldown
+- Owner can `pause`, `unpause`, and `setClaimAmount`
+- Upgradeable through UUPS
 
 ### GameVault
 
-- User melakukan `approve` ke vault lalu `deposit(amount)`
-- Vault memisahkan saldo `availableBalance`, `lockedBalance`, dan `treasuryBalance`
-- User hanya bisa `withdraw(amount)` dari `availableBalance`
-- `fundTreasury(amount)` dipakai untuk bootstrap likuiditas payout
-- Owner bisa `treasuryWithdraw(recipient, amount)` untuk menarik saldo treasury protokol
-- Owner bisa `rescueToken(token, recipient, amount)` untuk menyelamatkan token nyasar; khusus `USDC`, hanya saldo berlebih yang tidak memback balance user/treasury yang bisa di-rescue
-- Hanya `GameSettlement` yang boleh memanggil lock / settle stake
-- Owner bisa `pause()` / `unpause()` untuk menghentikan deposit, treasury funding, dan operasi settlement di vault
-- Upgradeable via UUPS
+- Users `approve` USDC and then call `deposit(amount)`
+- Tracks `available`, `locked`, and `treasury` balances separately
+- Users can only `withdraw(amount)` from their available balance
+- `fundTreasury(amount)` is used to bootstrap payout liquidity
+- Owner can withdraw treasury funds and rescue stray tokens
+- Only `GameSettlement` can lock stake and settle outcomes
+- Upgradeable through UUPS
 
 ### GameSettlement
 
-- `startSession(bytes32 onchainSessionId, uint256 stakeAmount)` mengunci stake dari vault
-- Satu wallet hanya boleh punya satu session aktif
-- `settleWithSignature(...)` memverifikasi payload EIP-712 dari backend
-- `expireSession(bytes32 sessionId)` menutup sesi yang macet setelah timeout sebagai `CRASHED`
-- Owner bisa `pause()` / `unpause()` untuk menghentikan start session dan settlement
-- `sessionExpiryDelay` bisa dikonfigurasi owner
-- Jika `CASHED_OUT`, payout masuk ke `availableBalance` internal user
-- Jika `CRASHED`, stake masuk ke treasury
-- Smart contract tidak menerima multiplier langsung dari client
-- Upgradeable via UUPS
+- `startSession(bytes32 onchainSessionId, uint256 stakeAmount)` locks stake in the vault
+- One wallet can only have one active session at a time
+- `settleWithSignature(...)` verifies backend EIP-712 settlement payloads
+- `expireSession(bytes32 sessionId)` closes stale sessions as `CRASHED`
+- Owner can `pause()` and `unpause()`
+- `sessionExpiryDelay` is configurable
+- Upgradeable through UUPS
 
 ## Prerequisites
 
-- Foundry terinstall
-- RPC Monad testnet tersedia
-- Private key deployer tersedia jika ingin broadcast deployment
+- Foundry installed
+- a Monad testnet RPC URL
+- a deployer private key for broadcasts
 
 ## Environment
 
-Tambahkan env berikut di `sc/.env`:
+Set values in `sc/.env`:
 
 ```bash
 MONAD_RPC_URL=https://your-monad-testnet-rpc
@@ -81,14 +78,18 @@ BACKEND_SIGNER=0xyour_backend_signer_address
 SESSION_EXPIRY_DELAY=86400
 ```
 
-Minimal yang dibutuhkan untuk broadcast hanyalah `MONAD_RPC_URL` dan `PRIVATE_KEY`.
-`PRIVATE_KEY` boleh memakai prefix `0x`.
-`INITIAL_OWNER` opsional. Jika tidak diisi, deploy script memakai address dari `PRIVATE_KEY`.
-`USDC_FAUCET_CLAIM_AMOUNT` opsional. Default-nya `100000000` atau `100 USDC` dengan 6 desimal.
-`BACKEND_SIGNER` opsional. Jika tidak diisi, deploy script memakai `INITIAL_OWNER`.
-`SESSION_EXPIRY_DELAY` opsional. Default-nya `86400` detik atau `1 hari`.
-`GAME_SETTLEMENT_ADDRESS` dan `NEW_BACKEND_SIGNER` dipakai saat kamu ingin mengganti signer backend setelah deploy.
-`TRUST_PASSPORT_ADDRESS` opsional untuk ikut mengganti signer backend pada kontrak passport.
+Minimum required values for deployment are:
+
+- `MONAD_RPC_URL`
+- `PRIVATE_KEY`
+
+Other useful values:
+
+- `INITIAL_OWNER`
+- `GAME_VAULT_ADDRESS`
+- `GAME_SETTLEMENT_ADDRESS`
+- `TRUST_PASSPORT_ADDRESS`
+- `NEW_BACKEND_SIGNER`
 
 ## Commands
 
@@ -98,10 +99,7 @@ Minimal yang dibutuhkan untuk broadcast hanyalah `MONAD_RPC_URL` dan `PRIVATE_KE
 forge build
 ```
 
-### Build For MonadVision / Sourcify
-
-Untuk deployment baru yang ingin kompatibel dengan alur verifikasi MonadVision/Sourcify sesuai docs Monad,
-pakai profile khusus ini:
+### Build for MonadVision / Sourcify
 
 ```bash
 FOUNDRY_PROFILE=monad_vision forge build
@@ -119,45 +117,31 @@ forge test --offline
 forge fmt
 ```
 
-## Deploy To Monad Testnet
+## Deploy to Monad Testnet
 
-### Standard Deploy
-
-Ini memakai profile default repo saat ini:
-
-Jika env sudah dimuat:
+### Standard deploy
 
 ```bash
 source .env
 forge script script/DeployGameContracts.s.sol:DeployGameContracts --rpc-url "$MONAD_RPC_URL" --broadcast
 ```
 
-Atau jika ingin tetap pakai argumen private key dari CLI:
-
-```bash
-forge script script/DeployGameContracts.s.sol:DeployGameContracts --rpc-url "$MONAD_RPC_URL" --private-key "$PRIVATE_KEY" --broadcast
-```
-
-### Deploy For MonadVision / Sourcify
-
-Kalau kamu ingin deployment baru yang sejak awal mengikuti konfigurasi yang direkomendasikan docs Monad untuk
-MonadVision / Sourcify, gunakan:
+### MonadVision / Sourcify-friendly deploy
 
 ```bash
 source .env
 FOUNDRY_PROFILE=monad_vision forge script script/DeployGameContracts.s.sol:DeployGameContracts --rpc-url "$MONAD_RPC_URL" --broadcast
 ```
 
-Script deploy akan:
+The deploy script:
 
-- deploy implementation `GameUSDC`, `USDCFaucet`, `GameVault`, `GameSettlement`
-- deploy implementation `TrustPassport`
-- deploy proxy UUPS untuk masing-masing kontrak
-- grant minter role dari token ke faucet
-- set `GameSettlement` sebagai operator resmi di `GameVault`
-- print alamat hasil deploy
+- deploys implementations for `GameUSDC`, `USDCFaucet`, `GameVault`, `GameSettlement`, and `TrustPassport`
+- deploys UUPS proxies
+- grants the faucet token minting rights
+- sets `GameSettlement` as the authorized vault settlement operator
+- prints the deployed addresses
 
-Output penting untuk frontend:
+Frontend-facing proxy outputs:
 
 ```bash
 NEXT_PUBLIC_USDC_ADDRESS=<deployed_game_usdc>
@@ -166,27 +150,9 @@ NEXT_PUBLIC_GAME_SETTLEMENT_ADDRESS=<deployed_game_settlement>
 NEXT_PUBLIC_TRUST_PASSPORT_ADDRESS=<deployed_trust_passport>
 ```
 
-Alamat yang dipakai frontend adalah alamat proxy, bukan implementation.
-
 ## Verification
 
-### Current Live Deployment
-
-Deployment yang sedang live saat ini sudah berhasil diverifikasi melalui explorer gaya Etherscan
-(`Monadscan` / `Socialscan`).
-
-Kalau alamat yang sama belum muncul sebagai verified di `MonadVision`, penyebab paling mungkin adalah deployment itu
-dibuat sebelum repo ini memakai konfigurasi yang direkomendasikan Sourcify / MonadVision.
-Perubahan config setelah kontrak terlanjur live tidak bisa mengubah metadata bytecode kontrak yang sudah terdeploy.
-
-Artinya:
-
-- deployment live sekarang: sudah verified di `Monadscan` / `Socialscan`
-- deployment baru dengan `FOUNDRY_PROFILE=monad_vision`: disiapkan supaya cocok dengan alur `MonadVision / Sourcify`
-
-### Verify On MonadVision / Sourcify
-
-Untuk deployment baru yang dibangun dengan profile `monad_vision`, gunakan pola resmi docs Monad:
+### Verify on MonadVision / Sourcify
 
 ```bash
 FOUNDRY_PROFILE=monad_vision forge verify-contract \
@@ -197,9 +163,7 @@ FOUNDRY_PROFILE=monad_vision forge verify-contract \
   --verifier-url https://sourcify-api-monad.blockvision.org/
 ```
 
-### Verify On Monadscan / Socialscan
-
-Untuk explorer yang memakai flow `etherscan`, gunakan:
+### Verify on Monadscan / Socialscan
 
 ```bash
 forge verify-contract \
@@ -214,47 +178,21 @@ forge verify-contract \
 
 ## Rotate Backend Signer
 
-Kalau wallet backend berbeda dari wallet deployer / owner, update signer onchain dengan script ini:
-
-Tambahkan env berikut di `sc/.env`:
-
-```bash
-GAME_SETTLEMENT_ADDRESS=0xyour_game_settlement_proxy
-NEW_BACKEND_SIGNER=0xyour_new_backend_signer_address
-```
-
-Lalu jalankan:
+To update the backend signer after deployment:
 
 ```bash
 source .env
 forge script script/UpdateBackendSigner.s.sol:UpdateBackendSigner --rpc-url "$MONAD_RPC_URL" --broadcast
 ```
 
-Script ini memanggil `setBackendSigner(newBackendSigner)` pada proxy `GameSettlement`.
-Pastikan `PRIVATE_KEY` yang dipakai adalah owner kontrak `GameSettlement`.
+Use the owner key for the target contracts.
 
-## Flow Backend-Authoritative
+## Backend-Authoritative Flow
 
-1. User `approve USDC` lalu `deposit(amount)` ke vault.
-2. Backend membuat `onchain_session_id` untuk ronde game.
-3. Frontend memanggil `GameSettlement.startSession(onchainSessionId, stakeAmount)`.
-4. Backend memvalidasi hasil game offchain lalu menandatangani payload `Resolution` via EIP-712.
-5. Frontend / keeper memanggil `settleWithSignature(...)`.
-6. Jika cashout berhasil, payout masuk ke `availableBalance` internal user.
-7. User bisa langsung memakai lagi seluruh `availableBalance` untuk ronde berikutnya, atau `withdraw(amount)` ke wallet kapan saja.
-8. Jika sesi macet dan tidak pernah di-settle, siapa pun bisa memanggil `expireSession(...)` setelah timeout untuk menutup sesi sebagai crash.
-
-## Frontend Wiring
-
-- `NEXT_PUBLIC_USDC_ADDRESS`
-- `NEXT_PUBLIC_GAME_VAULT_ADDRESS`
-- `NEXT_PUBLIC_GAME_SETTLEMENT_ADDRESS`
-- `NEXT_PUBLIC_TRUST_PASSPORT_ADDRESS`
-
-Frontend deposit dan game flow nantinya bisa memakai urutan:
-
-1. `approve(USDC, GameVault, amount)`
-2. `deposit(amount)`
-3. `startSession(onchainSessionId, stakeAmount)`
-4. `settleWithSignature(resolution, signature)`
-5. `withdraw(amount)`
+1. The user approves USDC and deposits into the vault.
+2. The backend creates an `onchain_session_id`.
+3. The frontend calls `GameSettlement.startSession(...)`.
+4. The backend validates the game result offchain and signs a settlement payload.
+5. The frontend or backend relayer submits settlement onchain.
+6. Cashouts move value back into the user's available vault balance.
+7. Crashes route stake into treasury.
