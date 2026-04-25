@@ -110,7 +110,7 @@ const RESPONSE_TIMEOUT_MS = 45_000;
 const RECONNECT_GRACE_TIMEOUT_MS = 32_000;
 const APPROVE_MAX_USDC_UNITS = parseUnits("10000000", USDC_DECIMALS);
 const ZERO_BYTES32 = `0x${"0".repeat(64)}`;
-const ACTIVE_SESSION_CACHE_MS = 1200;
+const ACTIVE_SESSION_CACHE_MS = 2500;
 
 function sleep(ms: number) {
   return new Promise<void>((resolve) => {
@@ -219,6 +219,13 @@ export function GameBridgeClient({
     address: null,
     value: ZERO_BYTES32,
     fetchedAt: 0,
+  });
+  const activeSessionInFlightRef = useRef<{
+    address: Address | null;
+    promise: Promise<string> | null;
+  }>({
+    address: null,
+    promise: null,
   });
 
   useEffect(() => {
@@ -422,6 +429,11 @@ export function GameBridgeClient({
           typeof payload === "string" ? payload : payload?.message || "",
           "Socket error dari backend.",
         );
+        const hadPendingRequest = Boolean(
+          pendingStartRef.current ||
+            pendingCashoutRef.current ||
+            pendingCrashRef.current,
+        );
 
         rejectPendingRequest(pendingStartRef.current, message);
         rejectPendingRequest(pendingCashoutRef.current, message);
@@ -429,9 +441,18 @@ export function GameBridgeClient({
         pendingStartRef.current = null;
         pendingCashoutRef.current = null;
         pendingCrashRef.current = null;
-        window.dispatchEvent(
-          new CustomEvent("chicken:game-error", { detail: { message } }),
-        );
+
+        // Socket transport errors can be transient while gameplay is running.
+        // We only surface them when they actually fail an in-flight request
+        // (start/cashout/crash). For connectivity changes, the disconnect flow
+        // already emits dedicated reconnect events.
+        if (hadPendingRequest) {
+          window.dispatchEvent(
+            new CustomEvent("chicken:game-error", { detail: { message } }),
+          );
+        } else {
+          console.warn("⚠️ Ignored transient socket error:", message);
+        }
       });
 
       socket.on("disconnect", (reason) => {
@@ -573,6 +594,19 @@ export function GameBridgeClient({
       );
     }
 
+    function isTransientSettlementSubmitError(error: unknown) {
+      const message = normalizeError(error, "").toLowerCase();
+      return (
+        isRateLimitedRpcError(error) ||
+        message.includes("failed to fetch") ||
+        message.includes("fetch failed") ||
+        message.includes("network") ||
+        message.includes("timeout") ||
+        message.includes("timed out") ||
+        message.includes("rpc")
+      );
+    }
+
     async function readContractWithRetry<T>(
       reader: () => Promise<T>,
       retries = 3,
@@ -586,6 +620,32 @@ export function GameBridgeClient({
             throw error;
           }
           const backoffMs = 250 * Math.pow(2, attempt);
+          attempt += 1;
+          await sleep(backoffMs);
+        }
+      }
+    }
+
+    async function submitSettlementWithRetry(
+      sessionId: string,
+      retries = 4,
+    ): Promise<{ success: boolean; txHash?: string }> {
+      let attempt = 0;
+      while (true) {
+        try {
+          return await backendPost<{ success: boolean; txHash?: string }>(
+            "/api/game/submit-settlement",
+            { sessionId },
+          );
+        } catch (error) {
+          if (
+            !isTransientSettlementSubmitError(error) ||
+            attempt >= retries
+          ) {
+            throw error;
+          }
+          const jitter = Math.floor(Math.random() * 180);
+          const backoffMs = 350 * Math.pow(2, attempt) + jitter;
           attempt += 1;
           await sleep(backoffMs);
         }
@@ -669,23 +729,58 @@ export function GameBridgeClient({
         return cached.value;
       }
 
-      const value = await readContractWithRetry(() =>
-        readContract(wagmiConfig, {
-          address: GAME_SETTLEMENT_ADDRESS as Address,
-          abi: GAME_SETTLEMENT_ABI,
-          functionName: "activeSessionOf",
-          args: [address],
-        }),
-      );
+      const inFlight = activeSessionInFlightRef.current;
+      if (
+        inFlight.promise &&
+        inFlight.address &&
+        inFlight.address.toLowerCase() === address.toLowerCase()
+      ) {
+        return inFlight.promise;
+      }
 
-      const normalized = String(value || "");
-      activeSessionCacheRef.current = {
-        address,
-        value: normalized,
-        fetchedAt: now,
-      };
+      let task: Promise<string>;
+      task = (async () => {
+        try {
+          const value = await readContractWithRetry(
+            () =>
+              readContract(wagmiConfig, {
+                address: GAME_SETTLEMENT_ADDRESS as Address,
+                abi: GAME_SETTLEMENT_ABI,
+                functionName: "activeSessionOf",
+                args: [address],
+              }),
+            4,
+          );
 
-      return normalized;
+          const normalized = String(value || "");
+          activeSessionCacheRef.current = {
+            address,
+            value: normalized,
+            fetchedAt: Date.now(),
+          };
+
+          return normalized;
+        } catch (error) {
+          const stale = activeSessionCacheRef.current;
+          const sameAddress =
+            stale.address &&
+            stale.address.toLowerCase() === address.toLowerCase();
+          if (sameAddress && isRateLimitedRpcError(error)) {
+            console.warn(
+              "⚠️ activeSessionOf rate-limited, using cached value.",
+            );
+            return stale.value;
+          }
+          throw error;
+        } finally {
+          if (activeSessionInFlightRef.current.promise === task) {
+            activeSessionInFlightRef.current = { address: null, promise: null };
+          }
+        }
+      })();
+
+      activeSessionInFlightRef.current = { address, promise: task };
+      return task;
     }
 
     function invalidateActiveSessionCache() {
@@ -844,9 +939,16 @@ export function GameBridgeClient({
     }
 
     async function refreshPlayBlockerStatus() {
-      const blocker = await getPlayBlocker();
-      emitPlayBlocker(blocker);
-      return blocker;
+      try {
+        const blocker = await getPlayBlocker();
+        emitPlayBlocker(blocker);
+        return blocker;
+      } catch (error) {
+        console.warn("⚠️ Failed to refresh play blocker:", error);
+        const fallback: ChickenBridgePlayBlocker = { kind: "none" };
+        emitPlayBlocker(fallback);
+        return fallback;
+      }
     }
 
     async function settlePendingSettlements(
@@ -882,12 +984,7 @@ export function GameBridgeClient({
             `Settling old session ${String(s.onchain_session_id || "").slice(0, 10)}...`,
           );
 
-          await backendPost<{
-            success: boolean;
-            txHash?: string;
-          }>("/api/game/submit-settlement", {
-            sessionId: s.session_id,
-          });
+          await submitSettlementWithRetry(String(s.session_id || ""));
           console.log(`✅ Old session ${s.session_id} settled by backend.`);
           settledCount += 1;
         } catch (err) {
@@ -1455,10 +1552,7 @@ export function GameBridgeClient({
         let txHash = String(payload.settlementTxHash || "");
         try {
           if (!txHash && payload.sessionId) {
-            const submit = await backendPost<{ success: boolean; txHash?: string }>(
-              "/api/game/submit-settlement",
-              { sessionId: payload.sessionId },
-            );
+            const submit = await submitSettlementWithRetry(payload.sessionId);
             txHash = String(submit?.txHash || "");
           }
           if (!txHash) {
@@ -1508,10 +1602,7 @@ export function GameBridgeClient({
         let txHash = String(payload.settlementTxHash || "");
         try {
           if (!txHash && payload.sessionId) {
-            const submit = await backendPost<{ success: boolean; txHash?: string }>(
-              "/api/game/submit-settlement",
-              { sessionId: payload.sessionId },
-            );
+            const submit = await submitSettlementWithRetry(payload.sessionId);
             txHash = String(submit?.txHash || "");
           }
           if (!txHash) {

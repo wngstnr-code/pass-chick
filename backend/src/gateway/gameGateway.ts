@@ -512,7 +512,7 @@ async function handleGameCashout(socket: Socket, walletAddress: string): Promise
   console.log(`💰 CASH OUT: ${walletAddress} | ${finalMultiplier.toFixed(4)}x | $${payoutAmount.toFixed(2)}`);
 
   let settlementResult;
-  let settlementTxHash: string;
+  let settlementTxHash: string | null = null;
   try {
     settlementResult = await signSettlementWithTimeout({
       playerAddress: walletAddress,
@@ -522,14 +522,20 @@ async function handleGameCashout(socket: Socket, walletAddress: string): Promise
       finalMultiplierBp,
       outcome: SETTLEMENT_OUTCOME.CASHED_OUT,
     });
+  } catch (signError) {
+    console.error("❌ Cashout settlement signing failed:", signError);
+    socket.emit("game:error", { message: "Failed to settle game result." });
+    return;
+  }
+
+  try {
     settlementTxHash = await submitSettlementOnchain({
       resolution: settlementResult.resolution,
       signature: settlementResult.signature,
     });
-  } catch (err) {
-    console.error("❌ Cashout settlement failed:", err);
-    socket.emit("game:error", { message: "Failed to settle game result." });
-    return;
+  } catch (submitError) {
+    // Keep game flow successful and let frontend/API retry settlement submission.
+    console.error("⚠️ Cashout settlement submit failed (will remain pending):", submitError);
   }
 
   await supabase
@@ -665,7 +671,7 @@ async function handleAutoCashout(walletAddress: string): Promise<void> {
   console.log(`🤖 AUTO CASH OUT: ${walletAddress} | ${finalMultiplier.toFixed(4)}x | $${payoutAmount.toFixed(2)}`);
 
   let settlementResult;
-  let settlementTxHash: string;
+  let settlementTxHash: string | null = null;
   try {
     settlementResult = await signSettlementWithTimeout({
       playerAddress: walletAddress,
@@ -675,13 +681,19 @@ async function handleAutoCashout(walletAddress: string): Promise<void> {
       finalMultiplierBp,
       outcome: SETTLEMENT_OUTCOME.CASHED_OUT,
     });
+  } catch {
+    await handleGameCrash(null, walletAddress, "auto_cashout_sign_failed");
+    return;
+  }
+
+  try {
     settlementTxHash = await submitSettlementOnchain({
       resolution: settlementResult.resolution,
       signature: settlementResult.signature,
     });
-  } catch {
-    await handleGameCrash(null, walletAddress, "auto_cashout_sign_failed");
-    return;
+  } catch (submitError) {
+    // Preserve cashout outcome in DB and resolve settlement later.
+    console.error("⚠️ Auto cashout settlement submit failed (will remain pending):", submitError);
   }
 
   await supabase

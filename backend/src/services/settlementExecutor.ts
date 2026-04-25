@@ -49,6 +49,60 @@ function toBigIntValue(value: string | number | bigint) {
   return BigInt(String(value || "0"));
 }
 
+function readRpcErrorMessage(error: unknown) {
+  return String(
+    (error as { shortMessage?: string; message?: string })?.shortMessage ||
+      (error as { message?: string })?.message ||
+      "",
+  ).toLowerCase();
+}
+
+function isTransientRpcError(error: unknown) {
+  const message = readRpcErrorMessage(error);
+  return (
+    message.includes("requests limited to 15/sec") ||
+    message.includes("too many requests") ||
+    message.includes("rate limit") ||
+    message.includes("429") ||
+    message.includes("fetch failed") ||
+    message.includes("failed to fetch") ||
+    message.includes("network") ||
+    message.includes("timeout") ||
+    message.includes("timed out") ||
+    message.includes("socket")
+  );
+}
+
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function withRpcRetry<T>(
+  fn: () => Promise<T>,
+  options: { retries?: number; baseDelayMs?: number } = {},
+): Promise<T> {
+  const retries = options.retries ?? 3;
+  const baseDelayMs = options.baseDelayMs ?? 250;
+  let attempt = 0;
+
+  while (true) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (!isTransientRpcError(error) || attempt >= retries) {
+        throw error;
+      }
+
+      const jitter = Math.floor(Math.random() * 140);
+      const backoffMs = baseDelayMs * Math.pow(2, attempt) + jitter;
+      attempt += 1;
+      await sleep(backoffMs);
+    }
+  }
+}
+
 function normalizeResolution(
   resolution: SettlementResolutionInput,
 ): {
@@ -94,23 +148,27 @@ export async function submitSettlementOnchain(params: {
   const normalizedResolution = normalizeResolution(params.resolution);
   const args = [normalizedResolution, signature as Hex] as const;
 
-  await settlementPublicClient.call({
-    account: account.address,
-    to: env.GAME_SETTLEMENT_ADDRESS as Address,
-    data: encodeFunctionData({
+  await withRpcRetry(() =>
+    settlementPublicClient.call({
+      account: account.address,
+      to: env.GAME_SETTLEMENT_ADDRESS as Address,
+      data: encodeFunctionData({
+        abi: GAME_SETTLEMENT_WRITE_ABI,
+        functionName: "settleWithSignature",
+        args,
+      }),
+    }),
+  );
+
+  const estimatedGas = await withRpcRetry(() =>
+    settlementPublicClient.estimateContractGas({
+      account,
+      address: env.GAME_SETTLEMENT_ADDRESS as Address,
       abi: GAME_SETTLEMENT_WRITE_ABI,
       functionName: "settleWithSignature",
       args,
     }),
-  });
-
-  const estimatedGas = await settlementPublicClient.estimateContractGas({
-    account,
-    address: env.GAME_SETTLEMENT_ADDRESS as Address,
-    abi: GAME_SETTLEMENT_WRITE_ABI,
-    functionName: "settleWithSignature",
-    args,
-  });
+  );
   const gasLimit =
     estimatedGas + SETTLEMENT_GAS_BUFFER > SETTLEMENT_MIN_GAS_LIMIT
       ? estimatedGas + SETTLEMENT_GAS_BUFFER
@@ -125,9 +183,13 @@ export async function submitSettlementOnchain(params: {
     gas: gasLimit,
   });
 
-  const receipt = await settlementPublicClient.waitForTransactionReceipt({
-    hash: txHash,
-  });
+  const receipt = await withRpcRetry(
+    () =>
+      settlementPublicClient.waitForTransactionReceipt({
+        hash: txHash,
+      }),
+    { retries: 4, baseDelayMs: 500 },
+  );
 
   if (receipt.status !== "success") {
     throw new Error("Settlement tx reverted");
