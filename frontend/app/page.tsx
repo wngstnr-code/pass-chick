@@ -86,6 +86,48 @@ const ABOUT_FEATURES = [
   },
 ];
 
+const FLOW_STEPS = [
+  {
+    label: "STEP 1",
+    title: "Faucet + Deposit",
+    copy: "Mint mock USDC from faucet, then deposit to vault as your playable balance.",
+  },
+  {
+    label: "STEP 2",
+    title: "Run Session",
+    copy: "Start a live run with stake from vault balance. Backend tracks checkpoints and anti-cheat rules.",
+  },
+  {
+    label: "STEP 3",
+    title: "Signed Settlement",
+    copy: "Result is settled onchain with backend signature. Win goes back to vault balance automatically.",
+  },
+];
+
+const PASSPORT_FEATURES = [
+  {
+    label: "HUMAN SCORE",
+    title: "Behavior-based trust signal",
+    copy: "Passport points are built from gameplay patterns and anti-bot signals, not from social hype.",
+  },
+  {
+    label: "ONCHAIN PROOF",
+    title: "Verifiable by any app",
+    copy: "Partner apps can verify wallet trust status onchain before granting access or rewards.",
+  },
+  {
+    label: "USE CASE",
+    title: "Airdrop and allowlist filter",
+    copy: "Projects can reduce sybil noise by checking passport eligibility directly from contract + API.",
+  },
+];
+
+const INTEGRATION_STEPS = [
+  "Read passport status from backend API for quick integration in web app flows.",
+  "Verify wallet passport eligibility from TrustPassport contract for trustless checks.",
+  "Combine both: fast UX from API plus onchain verification before sensitive actions.",
+];
+
 function shortAddress(address: string) {
   if (!address) return "-";
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -278,7 +320,7 @@ export default function Home() {
 
   function onHeroPlayNow() {
     if (isConnected) {
-      window.location.href = "/dashboard";
+      window.location.href = "/play";
       return;
     }
     openHeroConnectPrompt();
@@ -324,8 +366,7 @@ export default function Home() {
           stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+          strokeLinejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
           <circle cx="9" cy="7" r="4"></circle>
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -346,8 +387,7 @@ export default function Home() {
           stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+          strokeLinejoin="round">
           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
         </svg>
       ),
@@ -365,8 +405,7 @@ export default function Home() {
           stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+          strokeLinejoin="round">
           <path d="M6 3h12l4 6-10 12L2 9z"></path>
           <path d="M11 3 8 9l3 12 3-12-3-6z"></path>
           <path d="M2 9h20"></path>
@@ -393,16 +432,14 @@ export default function Home() {
                 <button
                   className="flow-btn secondary home-nav-login"
                   type="button"
-                  onClick={() => setShowProfilePopover((current) => !current)}
-                >
+                  onClick={() => setShowProfilePopover((current) => !current)}>
                   {shortAddress(account)}
                 </button>
 
                 {showProfilePopover && (
                   <section
                     className="flow-status home-profile-popover"
-                    style={{ color: "white" }}
-                  >
+                    style={{ color: "white" }}>
                     <p className="home-preview-title home-profile-heading">
                       PROFILE
                     </p>
@@ -426,30 +463,26 @@ export default function Home() {
                             isMonadChain
                               ? "home-profile-value-ready"
                               : "home-profile-value-warning"
-                          }`}
-                        >
+                          }`}>
                           {isMonadChain ? "MONAD READY" : "SWITCH TO MONAD"}
                         </span>
                       </div>
                     </div>
                     <div className="home-profile-actions">
                       <a
-                        href="/dashboard"
-                        className="flow-btn home-profile-action home-profile-action-dashboard"
-                      >
-                        DASHBOARD
+                        href="/"
+                        className="flow-btn home-profile-action home-profile-action-dashboard">
+                        HOME
                       </a>
                       <a
                         href="/managemoney"
-                        className="flow-btn home-profile-action home-profile-action-manage"
-                      >
+                        className="flow-btn home-profile-action home-profile-action-manage">
                         MANAGE MONEY
                       </a>
                       <button
                         className="flow-btn home-profile-action home-profile-action-logout"
                         type="button"
-                        onClick={onLogout}
-                      >
+                        onClick={onLogout}>
                         LOG OUT
                       </button>
                     </div>
@@ -460,8 +493,7 @@ export default function Home() {
               <button
                 className="flow-btn primary home-nav-login"
                 type="button"
-                onClick={openHeroConnectPrompt}
-              >
+                onClick={openHeroConnectPrompt}>
                 LOGIN
               </button>
             )}
@@ -494,16 +526,14 @@ export default function Home() {
                     type="button"
                     className="flow-btn home-btn-main home-hero-cta"
                     onClick={() => void connectWallet()}
-                    disabled={isConnecting}
-                  >
+                    disabled={isConnecting}>
                     {isConnecting ? "CONNECTING..." : "CONNECT WALLET"}
                   </button>
                   <button
                     type="button"
                     className="flow-btn home-btn-main home-hero-back-btn"
                     onClick={onHeroBack}
-                    disabled={isConnecting}
-                  >
+                    disabled={isConnecting}>
                     BACK
                   </button>
                   {error ? (
@@ -512,15 +542,41 @@ export default function Home() {
                     </p>
                   ) : null}
                 </div>
-              ) : (
+              ) : !isConnected ? (
                 <button
                   type="button"
                   className="flow-btn home-btn-main home-hero-cta"
-                  onClick={onHeroPlayNow}
-                >
-                  {isConnected ? "DASHBOARD" : "PLAY NOW"}
+                  onClick={onHeroPlayNow}>
+                  PLAY NOW
                 </button>
-              )}
+              ) : null}
+
+              {isConnected && !showHeroConnectPrompt ? (
+                <div className="home-hero-connected-actions">
+                  <a
+                    href="/play"
+                    className="flow-btn home-btn-main dashboard-btn dashboard-btn-play">
+                    PLAY NOW
+                  </a>
+                  <button
+                    type="button"
+                    className="flow-btn home-btn-main dashboard-btn dashboard-btn-how"
+                    onClick={() => setShowHelp(true)}>
+                    HOW TO PLAY
+                  </button>
+                  <a
+                    href="/managemoney"
+                    className="flow-btn home-btn-main dashboard-btn dashboard-btn-deposit">
+                    MANAGE MONEY
+                  </a>
+                  <button
+                    type="button"
+                    className="flow-btn home-btn-main dashboard-btn dashboard-btn-logout"
+                    onClick={onLogout}>
+                    LOG OUT
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -542,8 +598,7 @@ export default function Home() {
             {ABOUT_FEATURES.map((item) => (
               <article key={item.title} className="home-about-feature">
                 <div
-                  className={`home-about-media home-about-media-${item.tone}`}
-                >
+                  className={`home-about-media home-about-media-${item.tone}`}>
                   {item.imageSrc ? (
                     <img
                       className="home-about-image"
@@ -561,6 +616,128 @@ export default function Home() {
                 <p className="home-about-feature-copy">{item.copy}</p>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="home-section home-section-social">
+        <div className="home-shell home-shell-section">
+          <div className="home-section-head home-section-head-center">
+            <h2 className="home-section-title home-section-title-social">
+              LIVE <span className="home-section-title-accent">ARCADE PULSE</span>
+            </h2>
+          </div>
+
+          <div className="home-social-stats">
+            {socialStats.map((stat) => (
+              <article key={stat.label} className="home-social-stat">
+                <div className="home-social-icon">{stat.icon}</div>
+                <p>{stat.label}</p>
+                <strong>{isSocialLoading ? "..." : stat.value}</strong>
+                <span>{stat.note}</span>
+              </article>
+            ))}
+          </div>
+
+          <div className="home-social-grid">
+            <article className="home-social-card">
+              <div className="home-social-card-head">
+                <h3>BEST DISTANCE</h3>
+              </div>
+              <ul className="home-social-list">
+                {distanceBoard.slice(0, 3).map((entry, index) => (
+                  <li key={`${entry.wallet_address}-${index}`} className="home-social-item">
+                    <div>
+                      <p>RANK #{index + 1}</p>
+                      <h4>{shortAddress(entry.wallet_address)}</h4>
+                      <span>
+                        {toNumber(entry.games_played)} runs | Peak{" "}
+                        {readBestMultiplier(entry).toFixed(2)}x
+                      </span>
+                    </div>
+                    <strong>{readBestScore(entry)} hops</strong>
+                  </li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="home-social-card">
+              <div className="home-social-card-head">
+                <h3>TOP PROFIT</h3>
+              </div>
+              <ul className="home-social-list">
+                {profitBoard.slice(0, 3).map((entry, index) => (
+                  <li key={`${entry.wallet_address}-${index}`} className="home-social-item">
+                    <div>
+                      <p>RANK #{index + 1}</p>
+                      <h4>{shortAddress(entry.wallet_address)}</h4>
+                      <span>
+                        {toNumber(entry.total_games)} runs | {toNumber(entry.total_wins)} wins
+                      </span>
+                    </div>
+                    <strong>{formatMoney(entry.total_profit)}</strong>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section className="home-section home-section-system">
+        <div className="home-shell home-shell-section">
+          <div className="home-section-head">
+            <h2 className="home-section-title">ONCHAIN GAME FLOW</h2>
+          </div>
+          <div className="home-feature-grid">
+            {FLOW_STEPS.map((step) => (
+              <article key={step.title} className="home-feature-card">
+                <p>{step.label}</p>
+                <h3>{step.title}</h3>
+                <span>{step.copy}</span>
+              </article>
+            ))}
+          </div>
+
+          <div className="home-money-band">
+            <div>
+              <h3>TRUST PASSPORT</h3>
+              <p>
+                Passport is a reusable trust layer from your gameplay behavior.
+                It can be consumed by this game and external projects as anti-bot
+                signal.
+              </p>
+            </div>
+            <p>
+              Live contracts: USDC + Faucet + Vault + Settlement + Passport on
+              Monad Testnet.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="home-section home-section-passport">
+        <div className="home-shell home-shell-section">
+          <div className="home-section-head">
+            <h2 className="home-section-title">PASSPORT FOR PARTNER APPS</h2>
+          </div>
+          <div className="home-feature-grid">
+            {PASSPORT_FEATURES.map((item) => (
+              <article key={item.title} className="home-feature-card">
+                <p>{item.label}</p>
+                <h3>{item.title}</h3>
+                <span>{item.copy}</span>
+              </article>
+            ))}
+          </div>
+
+          <div className="home-integration-note">
+            <h3>HOW OTHER WEBSITES INTEGRATE</h3>
+            <ul>
+              {INTEGRATION_STEPS.map((step) => (
+                <li key={step}>{step}</li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
@@ -590,8 +767,7 @@ export default function Home() {
             <button
               className="home-modal-close"
               type="button"
-              onClick={() => setShowHelp(false)}
-            >
+              onClick={() => setShowHelp(false)}>
               X
             </button>
             <h2>HOW TO PLAY</h2>
@@ -629,8 +805,7 @@ export default function Home() {
             <button
               className="flow-btn secondary info-modal-action"
               type="button"
-              onClick={() => setShowHelp(false)}
-            >
+              onClick={() => setShowHelp(false)}>
               GOT IT
             </button>
           </div>
@@ -641,8 +816,7 @@ export default function Home() {
         className="home-help-btn fixed-help"
         type="button"
         onClick={() => setShowHelp(true)}
-        title="How to Play"
-      >
+        title="How to Play">
         ?
       </button>
     </main>
