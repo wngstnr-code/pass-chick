@@ -1,4 +1,4 @@
-import { BACKEND_API_URL } from "./config.js";
+import { BACKEND_API_URL } from "./config";
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
@@ -9,7 +9,10 @@ function buildUrl(path: string) {
   return `${base}${normalizedPath}`;
 }
 
-export async function backendFetch<T>(path: string, init?: RequestInit): Promise<T> {
+export async function backendFetch<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
   const response = await fetch(buildUrl(path), {
     ...init,
     credentials: "include",
@@ -20,8 +23,12 @@ export async function backendFetch<T>(path: string, init?: RequestInit): Promise
     cache: "no-store",
   });
 
-  const isJson = response.headers.get("content-type")?.includes("application/json");
-  const payload = isJson ? ((await response.json()) as T | { error?: string }) : null;
+  const isJson = response.headers
+    .get("content-type")
+    ?.includes("application/json");
+  const payload = isJson
+    ? ((await response.json()) as T | { error?: string })
+    : null;
 
   if (!response.ok) {
     const errorMessage =
@@ -36,7 +43,7 @@ export async function backendFetch<T>(path: string, init?: RequestInit): Promise
 
 export async function backendPost<T>(
   path: string,
-  body?: JsonValue | Record<string, JsonValue>
+  body?: JsonValue | Record<string, JsonValue>,
 ): Promise<T> {
   return backendFetch<T>(path, {
     method: "POST",
