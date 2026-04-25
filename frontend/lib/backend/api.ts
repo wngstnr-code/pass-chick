@@ -9,19 +9,45 @@ function buildUrl(path: string) {
   return `${base}${normalizedPath}`;
 }
 
+const BACKEND_FETCH_TIMEOUT_MS = 12_000;
+
 export async function backendFetch<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  const response = await fetch(buildUrl(path), {
-    ...init,
-    credentials: "include",
-    headers: {
-      "content-type": "application/json",
-      ...(init?.headers || {}),
-    },
-    cache: "no-store",
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, BACKEND_FETCH_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(buildUrl(path), {
+      ...init,
+      credentials: "include",
+      headers: {
+        "content-type": "application/json",
+        ...(init?.headers || {}),
+      },
+      cache: "no-store",
+      signal: controller.signal,
+    });
+  } catch (error) {
+    const isAbortError =
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      String((error as { name?: string }).name || "") === "AbortError";
+
+    if (isAbortError) {
+      throw new Error(
+        `Backend request timeout (> ${Math.floor(BACKEND_FETCH_TIMEOUT_MS / 1000)}s).`,
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const isJson = response.headers
     .get("content-type")
