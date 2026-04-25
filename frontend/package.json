@@ -1,0 +1,36 @@
+{
+  "name": "chicken-monad",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@coinbase/wallet-sdk": "^4.3.7",
+    "@metamask/connect-evm": "^0.9.1",
+    "@reown/appkit": "^1.8.19",
+    "@reown/appkit-adapter-wagmi": "^1.8.19",
+    "@solana/kit": "^6.8.0",
+    "@tanstack/react-query": "^5.99.2",
+    "@wagmi/core": "^3.4.5",
+    "@walletconnect/ethereum-provider": "^2.23.9",
+    "accounts": "^0.6.7",
+    "axios": "^1.15.2",
+    "next": "^14.2.35",
+    "porto": "^0.2.37",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "siwe": "^3.0.0",
+    "socket.io-client": "^4.8.3",
+    "viem": "^2.48.4",
+    "wagmi": "^3.6.4",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "25.6.0",
+    "@types/react": "19.2.14",
+    "typescript": "6.0.3"
+  }
+}
