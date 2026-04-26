@@ -133,6 +133,62 @@ export const USDC_FAUCET_ABI = [
 
 export const TRUST_PASSPORT_ABI = [
   {
+    type: "error",
+    name: "InvalidSigner",
+    inputs: [{ name: "signer", type: "address" }],
+  },
+  {
+    type: "error",
+    name: "InvalidPlayer",
+    inputs: [{ name: "player", type: "address" }],
+  },
+  {
+    type: "error",
+    name: "InvalidTier",
+    inputs: [{ name: "tier", type: "uint8" }],
+  },
+  {
+    type: "error",
+    name: "InvalidIssuedAt",
+    inputs: [{ name: "issuedAt", type: "uint64" }],
+  },
+  {
+    type: "error",
+    name: "InvalidExpiry",
+    inputs: [{ name: "expiry", type: "uint64" }],
+  },
+  {
+    type: "error",
+    name: "PassportClaimExpired",
+    inputs: [{ name: "expiry", type: "uint64" }],
+  },
+  {
+    type: "error",
+    name: "NonceAlreadyUsed",
+    inputs: [{ name: "nonce", type: "uint256" }],
+  },
+  {
+    type: "error",
+    name: "InvalidSignatureSigner",
+    inputs: [
+      { name: "recovered", type: "address" },
+      { name: "expected", type: "address" },
+    ],
+  },
+  {
+    type: "error",
+    name: "StalePassportClaim",
+    inputs: [
+      { name: "issuedAt", type: "uint64" },
+      { name: "currentIssuedAt", type: "uint64" },
+    ],
+  },
+  {
+    type: "error",
+    name: "PassportAlreadyRevoked",
+    inputs: [{ name: "player", type: "address" }],
+  },
+  {
     type: "function",
     name: "backendSigner",
     stateMutability: "view",
