@@ -219,6 +219,32 @@ function extractErrorSelector(error: unknown) {
     visited.add(current);
 
     const record = current as Record<string, unknown>;
+    const preferredKeys = [
+      "data",
+      "details",
+      "shortMessage",
+      "message",
+      "metaMessages",
+      "cause",
+    ] as const;
+
+    for (const key of preferredKeys) {
+      const value = (record as Record<string, unknown>)[key];
+      if (typeof value === "string") {
+        texts.push(value);
+      } else if (Array.isArray(value)) {
+        for (const item of value) {
+          if (typeof item === "string") {
+            texts.push(item);
+          } else if (item && typeof item === "object") {
+            queue.push(item);
+          }
+        }
+      } else if (value && typeof value === "object") {
+        queue.push(value);
+      }
+    }
+
     for (const value of Object.values(record)) {
       if (typeof value === "string") {
         texts.push(value);
@@ -1549,27 +1575,29 @@ export function GameBridgeClient({
         }
 
         const issuedSignerAddress = String(issued?.signerAddress || "").toLowerCase();
-        if (isAddress(issuedSignerAddress)) {
-          let onchainBackendSigner = "";
-          try {
-            onchainBackendSigner = String(
-              await readContract(wagmiConfig, {
-                address: TRUST_PASSPORT_ADDRESS as Address,
-                abi: TRUST_PASSPORT_ABI,
-                functionName: "backendSigner",
-              }),
-            ).toLowerCase();
-          } catch {
-            throw new Error(
-              "Gagal verifikasi signer passport on-chain. Cek RPC/konfigurasi contract.",
-            );
-          }
+        if (!isAddress(issuedSignerAddress)) {
+          throw new Error("Backend tidak mengembalikan signerAddress passport yang valid.");
+        }
 
-          if (onchainBackendSigner !== issuedSignerAddress) {
-            throw new Error(
-              "Signer backend tidak sinkron dengan signer passport on-chain. Minta admin update signer contract.",
-            );
-          }
+        let onchainBackendSigner = "";
+        try {
+          onchainBackendSigner = String(
+            await readContract(wagmiConfig, {
+              address: TRUST_PASSPORT_ADDRESS as Address,
+              abi: TRUST_PASSPORT_ABI,
+              functionName: "backendSigner",
+            }),
+          ).toLowerCase();
+        } catch {
+          throw new Error(
+            "Gagal verifikasi signer passport on-chain. Cek RPC/konfigurasi contract.",
+          );
+        }
+
+        if (onchainBackendSigner !== issuedSignerAddress) {
+          throw new Error(
+            "Signer backend tidak sinkron dengan signer passport on-chain. Minta admin update signer contract.",
+          );
         }
 
         let txHash: string;
@@ -1617,6 +1645,36 @@ export function GameBridgeClient({
           });
         } catch (error) {
           console.error("❌ claimWithSignature failed:", error);
+          const err = error as {
+            name?: string;
+            shortMessage?: string;
+            message?: string;
+            details?: string;
+            data?: string;
+            metaMessages?: string[];
+            cause?: {
+              name?: string;
+              shortMessage?: string;
+              message?: string;
+              details?: string;
+              data?: string;
+              metaMessages?: string[];
+            };
+          };
+          console.error("❌ claimWithSignature failed details:", {
+            name: err?.name,
+            shortMessage: err?.shortMessage,
+            message: err?.message,
+            details: err?.details,
+            data: err?.data,
+            metaMessages: err?.metaMessages,
+            causeName: err?.cause?.name,
+            causeShortMessage: err?.cause?.shortMessage,
+            causeMessage: err?.cause?.message,
+            causeDetails: err?.cause?.details,
+            causeData: err?.cause?.data,
+            causeMetaMessages: err?.cause?.metaMessages,
+          });
           throw new Error(
             toPassportClaimFailureMessage(error, "Claim passport gagal."),
           );
