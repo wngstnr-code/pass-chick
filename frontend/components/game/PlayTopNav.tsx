@@ -29,6 +29,11 @@ type PlayStatusState = {
   sticky?: boolean;
 };
 
+type PassportPopupState = {
+  tier: number;
+  expiry: number;
+};
+
 const SFX_STORAGE_KEY = "chickenSfxVolume";
 
 export function PlayTopNav() {
@@ -53,6 +58,9 @@ export function PlayTopNav() {
   const [sfxVolumePercent, setSfxVolumePercent] = useState(90);
   const [passportStatusText, setPassportStatusText] = useState("");
   const [passportBusy, setPassportBusy] = useState(false);
+  const [passportPopup, setPassportPopup] = useState<PassportPopupState | null>(
+    null,
+  );
   const [transientStatus, setTransientStatus] =
     useState<PlayStatusState | null>(null);
   const [playBlocker, setPlayBlocker] =
@@ -193,6 +201,10 @@ export function PlayTopNav() {
         : "-";
       const message = `PASSPORT CLAIMED • TIER ${result.tier} • EXP ${expiryText}`;
       setPassportStatusText(message);
+      setPassportPopup({
+        tier: result.tier,
+        expiry: result.expiry,
+      });
       dispatchStatusUpdate({
         message,
         tone: "ready",
@@ -385,6 +397,7 @@ export function PlayTopNav() {
       if (event.key === "Escape") {
         setIsWalletMenuOpen(false);
         setIsMenuOpen(false);
+        setPassportPopup(null);
       }
     }
 
@@ -758,6 +771,52 @@ export function PlayTopNav() {
         ) : null}
       </div>
     </nav>
+      {passportPopup ? (
+        <div
+          className="modal-bg play-passport-modal"
+          onClick={() => {
+            setPassportPopup(null);
+          }}
+        >
+          <div
+            className="modal-box play-passport-box"
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          >
+            <button
+              className="close-btn"
+              type="button"
+              aria-label="Close passport popup"
+              onClick={() => {
+                setPassportPopup(null);
+              }}
+            >
+              X
+            </button>
+            <p className="play-passport-kicker">CHICKEN TRUST PASSPORT</p>
+            <h3 className="play-passport-title">PASSPORT CLAIMED</h3>
+            <div className="play-passport-card">
+              <div className="play-passport-chip" aria-hidden="true" />
+              <p className="play-passport-name">{shortAddress(account || "")}</p>
+              <p className="play-passport-tier">TIER {passportPopup.tier}</p>
+              <p className="play-passport-expiry">
+                EXP:{" "}
+                {new Date(passportPopup.expiry * 1000).toLocaleDateString()}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="play-passport-cta"
+              onClick={() => {
+                setPassportPopup(null);
+              }}
+            >
+              NICE!
+            </button>
+          </div>
+        </div>
+      ) : null}
       <div
         id="leaderboard-modal"
         className="modal-bg"

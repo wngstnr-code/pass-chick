@@ -2262,6 +2262,148 @@ canvas.game {
   text-align: center;
 }
 
+.play-passport-modal {
+  z-index: 1800;
+}
+
+.play-passport-box {
+  position: relative;
+  max-width: 460px;
+  width: calc(100% - 28px);
+  border: 4px solid #2f405a;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 12px 38px rgba(0, 0, 0, 0.35), 9px 10px 0 rgba(0, 0, 0, 0.2);
+  padding: 32px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.play-passport-kicker {
+  margin: 0;
+  text-align: center;
+  color: #6a4f99;
+  font-size: 10px;
+  letter-spacing: 1.3px;
+}
+
+.play-passport-title {
+  margin: 0;
+  text-align: center;
+  color: #243752;
+  font-size: 20px;
+  letter-spacing: 0.9px;
+}
+
+.play-passport-card {
+  border: 3px solid #3a2b5c;
+  border-radius: 18px;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.2) 0 34%, transparent 34%),
+    linear-gradient(145deg, #3f77b7 0%, #2b4e90 45%, #2a1142 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 4px 5px 0 rgba(0, 0, 0, 0.22);
+  color: #f5fbff;
+  min-height: 176px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.play-passport-card::before {
+  content: "GMonad";
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  font-size: 10px;
+  letter-spacing: 0.8px;
+  color: #ffe7b5;
+  z-index: 2;
+}
+
+.play-passport-card::after {
+  content: "";
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  top: -92px;
+  right: -70px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.play-passport-chip {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 42px;
+  height: 32px;
+  border-radius: 7px;
+  border: 2px solid #9a7318;
+  background-color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  background-image: url("/images/monad-logo.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 70% auto;
+}
+
+.play-passport-name,
+.play-passport-tier,
+.play-passport-expiry {
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.play-passport-name {
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  opacity: 0.9;
+}
+
+.play-passport-tier {
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: #ffe7b5;
+}
+
+.play-passport-expiry {
+  font-size: 10px;
+  letter-spacing: 0.8px;
+  opacity: 0.92;
+}
+
+.play-passport-cta {
+  width: 100%;
+  min-height: 46px;
+  border-radius: 12px;
+  border: 3px solid #8f6915;
+  background: #f4bf5d;
+  color: #2a1142;
+  font-family: "Press Start 2P", cursive;
+  font-size: 10px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #b07d22, 0 8px 14px rgba(29, 12, 47, 0.2);
+  transition: transform 0.08s ease, background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.play-passport-cta:hover {
+  background: #ffd279;
+  box-shadow: 0 5px 0 #b07d22, 0 10px 16px rgba(29, 12, 47, 0.22);
+}
+
+.play-passport-cta:active {
+  transform: translateY(3px);
+  background: #e5b254;
+  box-shadow: 0 1px 0 #b07d22, 0 2px 6px rgba(29, 12, 47, 0.2);
+}
+
 /* Logout - Red */
 .play-menu-modal-item.logout {
   background: linear-gradient(180deg, #ff8a8a 0%, #dd3d3d 100%);
@@ -2972,6 +3114,55 @@ canvas.game {
     min-height: 28px;
     font-size: 8px;
     border-radius: 8px;
+  }
+
+  .play-passport-box {
+    border-width: 3px;
+    border-radius: 18px;
+    padding: 24px 16px 16px;
+    gap: 10px;
+  }
+
+  .play-passport-kicker {
+    font-size: 8px;
+  }
+
+  .play-passport-title {
+    font-size: 15px;
+  }
+
+  .play-passport-card {
+    min-height: 142px;
+    border-width: 2px;
+    border-radius: 12px;
+    padding: 14px 12px;
+    gap: 8px;
+  }
+
+  .play-passport-chip {
+    width: 34px;
+    height: 26px;
+    top: 12px;
+    left: 12px;
+  }
+
+  .play-passport-name {
+    font-size: 9px;
+  }
+
+  .play-passport-tier {
+    font-size: 13px;
+  }
+
+  .play-passport-expiry {
+    font-size: 8px;
+  }
+
+  .play-passport-cta {
+    min-height: 36px;
+    border-width: 2px;
+    border-radius: 10px;
+    font-size: 8px;
   }
 
   #result-container #result {
