@@ -134,6 +134,13 @@ export const USDC_FAUCET_ABI = [
 export const TRUST_PASSPORT_ABI = [
   {
     type: "function",
+    name: "backendSigner",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
+  },
+  {
+    type: "function",
     name: "getPassport",
     stateMutability: "view",
     inputs: [{ name: "player", type: "address" }],

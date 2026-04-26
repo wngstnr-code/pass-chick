@@ -88,6 +88,7 @@ type ActiveBackendSessionPayload = {
 
 type PassportIssueSignaturePayload = {
   success: boolean;
+  signerAddress?: string;
   claim: {
     player: string;
     tier: number;
@@ -1417,6 +1418,30 @@ export function GameBridgeClient({
           throw new Error(
             "Signer payload player tidak cocok dengan wallet aktif.",
           );
+        }
+
+        const issuedSignerAddress = String(issued?.signerAddress || "").toLowerCase();
+        if (isAddress(issuedSignerAddress)) {
+          let onchainBackendSigner = "";
+          try {
+            onchainBackendSigner = String(
+              await readContract(wagmiConfig, {
+                address: TRUST_PASSPORT_ADDRESS as Address,
+                abi: TRUST_PASSPORT_ABI,
+                functionName: "backendSigner",
+              }),
+            ).toLowerCase();
+          } catch {
+            throw new Error(
+              "Gagal verifikasi signer passport on-chain. Cek RPC/konfigurasi contract.",
+            );
+          }
+
+          if (onchainBackendSigner !== issuedSignerAddress) {
+            throw new Error(
+              "Signer backend tidak sinkron dengan signer passport on-chain. Minta admin update signer contract.",
+            );
+          }
         }
 
         let txHash: string;
