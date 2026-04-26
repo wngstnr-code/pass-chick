@@ -197,6 +197,13 @@ export const TRUST_PASSPORT_ABI = [
   },
   {
     type: "function",
+    name: "paused",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
     name: "getPassport",
     stateMutability: "view",
     inputs: [{ name: "player", type: "address" }],
@@ -212,6 +219,13 @@ export const TRUST_PASSPORT_ABI = [
     name: "isPassportValid",
     stateMutability: "view",
     inputs: [{ name: "player", type: "address" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "usedNonces",
+    stateMutability: "view",
+    inputs: [{ name: "nonce", type: "uint256" }],
     outputs: [{ name: "", type: "bool" }],
   },
   {

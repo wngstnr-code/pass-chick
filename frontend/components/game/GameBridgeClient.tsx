@@ -34,6 +34,7 @@ import {
   hasGameContractConfig,
   hasPassportContractConfig,
 } from "../../lib/web3/contracts";
+import { MONAD_CHAIN } from "../../lib/web3/monad";
 
 type GameBridgeClientProps = {
   backgroundMode?: boolean;
@@ -90,6 +91,10 @@ type ActiveBackendSessionPayload = {
 type PassportIssueSignaturePayload = {
   success: boolean;
   signerAddress?: string;
+  signingDomain?: {
+    chainId?: number;
+    verifyingContract?: string;
+  };
   claim: {
     player: string;
     tier: number;
@@ -1574,6 +1579,30 @@ export function GameBridgeClient({
           );
         }
 
+        const backendDomainChainId = Number(issued?.signingDomain?.chainId || 0);
+        const appChainId = Number(MONAD_CHAIN.chainIdDecimal || 0);
+        if (
+          backendDomainChainId > 0 &&
+          appChainId > 0 &&
+          backendDomainChainId !== appChainId
+        ) {
+          throw new Error(
+            `Chain ID backend (${backendDomainChainId}) tidak sama dengan frontend (${appChainId}).`,
+          );
+        }
+
+        const backendDomainContract = String(
+          issued?.signingDomain?.verifyingContract || "",
+        ).toLowerCase();
+        if (
+          isAddress(backendDomainContract) &&
+          backendDomainContract !== String(TRUST_PASSPORT_ADDRESS).toLowerCase()
+        ) {
+          throw new Error(
+            "TRUST_PASSPORT_ADDRESS backend dan frontend tidak sama.",
+          );
+        }
+
         const issuedSignerAddress = String(issued?.signerAddress || "").toLowerCase();
         if (!isAddress(issuedSignerAddress)) {
           throw new Error("Backend tidak mengembalikan signerAddress passport yang valid.");
@@ -1598,6 +1627,54 @@ export function GameBridgeClient({
           throw new Error(
             "Signer backend tidak sinkron dengan signer passport on-chain. Minta admin update signer contract.",
           );
+        }
+
+        if (Number(claim.expiry) <= Math.floor(Date.now() / 1000)) {
+          throw new Error(
+            "Signature passport sudah expired. Klik Claim Passport lagi.",
+          );
+        }
+
+        try {
+          const [isPaused, isNonceUsed, currentPassport] = await Promise.all([
+            readContract(wagmiConfig, {
+              address: TRUST_PASSPORT_ADDRESS as Address,
+              abi: TRUST_PASSPORT_ABI,
+              functionName: "paused",
+            }),
+            readContract(wagmiConfig, {
+              address: TRUST_PASSPORT_ADDRESS as Address,
+              abi: TRUST_PASSPORT_ABI,
+              functionName: "usedNonces",
+              args: [BigInt(claim.nonce)],
+            }),
+            readContract(wagmiConfig, {
+              address: TRUST_PASSPORT_ADDRESS as Address,
+              abi: TRUST_PASSPORT_ABI,
+              functionName: "getPassport",
+              args: [playerAddress],
+            }),
+          ]);
+
+          if (Boolean(isPaused)) {
+            throw new Error("Contract passport sedang pause.");
+          }
+          if (Boolean(isNonceUsed)) {
+            throw new Error("Nonce claim passport sudah terpakai. Coba claim ulang.");
+          }
+
+          const currentIssuedAt = Number(currentPassport?.[1] ?? 0);
+          const nextIssuedAt = Number(claim.issuedAt);
+          if (currentIssuedAt > 0 && nextIssuedAt < currentIssuedAt) {
+            throw new Error(
+              "Claim passport stale (issuedAt lebih lama dari data on-chain). Coba claim ulang.",
+            );
+          }
+        } catch (error) {
+          if (error instanceof Error && error.message) {
+            throw error;
+          }
+          console.warn("⚠️ Passport preflight checks skipped:", error);
         }
 
         let txHash: string;

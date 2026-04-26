@@ -195,6 +195,10 @@ router.post("/issue-signature", requireAuth, async (req: Request, res: Response)
       claim: signed.claim,
       signature: signed.signature,
       signerAddress: signed.signerAddress,
+      signingDomain: {
+        chainId: env.MONAD_CHAIN_ID,
+        verifyingContract: env.TRUST_PASSPORT_ADDRESS,
+      },
       signatureExpiry,
       eligibility,
     });
