@@ -1,7 +1,14 @@
 "use client";
 
 import { useAppKit } from "@reown/appkit/react";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { ReactNode } from "react";
 import { SiweMessage } from "siwe";
 import {
@@ -98,6 +105,17 @@ export function WalletProvider({ children }: WalletProviderProps) {
   const [backendAddress, setBackendAddress] = useState("");
   const [backendAuthLoading, setBackendAuthLoading] = useState(false);
   const [backendAuthError, setBackendAuthError] = useState("");
+  const backendSessionRef = useRef<{
+    inFlight: Promise<boolean> | null;
+    lastCheckedAt: number;
+    lastResult: boolean;
+    account: string;
+  }>({
+    inFlight: null,
+    lastCheckedAt: 0,
+    lastResult: false,
+    account: "",
+  });
   const { open } = useAppKit();
   const { address, chainId, isConnected } = useAccount();
   const { disconnectAsync } = useDisconnect();
@@ -231,30 +249,71 @@ export function WalletProvider({ children }: WalletProviderProps) {
       return false;
     }
 
-    setBackendAuthLoading(true);
-    try {
-      const response = await backendFetch<{
-        authenticated: boolean;
-        address: string;
-      }>("/auth/me");
-      const sessionAddress = response.address?.toLowerCase?.() || "";
-      if (
-        !sessionAddress ||
-        (normalizedAccount && sessionAddress !== normalizedAccount)
-      ) {
-        setBackendAddress("");
-        return false;
-      }
+    const now = Date.now();
+    const snapshot = backendSessionRef.current;
+    const sameAccount = snapshot.account === normalizedAccount;
+    const cooldownMs = snapshot.lastResult ? 12_000 : 4_000;
 
-      setBackendAddress(sessionAddress);
-      setBackendAuthError("");
-      return true;
-    } catch {
-      setBackendAddress("");
-      return false;
-    } finally {
-      setBackendAuthLoading(false);
+    if (snapshot.inFlight) {
+      return snapshot.inFlight;
     }
+
+    if (sameAccount && now - snapshot.lastCheckedAt < cooldownMs) {
+      return snapshot.lastResult;
+    }
+
+    const task = (async () => {
+      setBackendAuthLoading(true);
+      try {
+        const response = await backendFetch<{
+          authenticated: boolean;
+          address: string;
+        }>("/auth/me");
+        const sessionAddress = response.address?.toLowerCase?.() || "";
+        if (
+          !sessionAddress ||
+          (normalizedAccount && sessionAddress !== normalizedAccount)
+        ) {
+          setBackendAddress("");
+          backendSessionRef.current = {
+            inFlight: null,
+            lastCheckedAt: Date.now(),
+            lastResult: false,
+            account: normalizedAccount,
+          };
+          return false;
+        }
+
+        setBackendAddress(sessionAddress);
+        setBackendAuthError("");
+        backendSessionRef.current = {
+          inFlight: null,
+          lastCheckedAt: Date.now(),
+          lastResult: true,
+          account: normalizedAccount,
+        };
+        return true;
+      } catch {
+        setBackendAddress("");
+        backendSessionRef.current = {
+          inFlight: null,
+          lastCheckedAt: Date.now(),
+          lastResult: false,
+          account: normalizedAccount,
+        };
+        return false;
+      } finally {
+        setBackendAuthLoading(false);
+      }
+    })();
+
+    backendSessionRef.current = {
+      ...backendSessionRef.current,
+      inFlight: task,
+      account: normalizedAccount,
+    };
+
+    return task;
   }
 
   async function authenticateBackend() {
@@ -295,11 +354,25 @@ export function WalletProvider({ children }: WalletProviderProps) {
         signature,
       });
 
-      setBackendAddress(account.toLowerCase());
+      const nextAddress = account.toLowerCase();
+      setBackendAddress(nextAddress);
       setBackendAuthError("");
+      backendSessionRef.current = {
+        inFlight: null,
+        lastCheckedAt: Date.now(),
+        lastResult: true,
+        account: nextAddress,
+      };
       return true;
-    } catch (authError) {
+    }
+    catch (authError) {
       setBackendAddress("");
+      backendSessionRef.current = {
+        inFlight: null,
+        lastCheckedAt: Date.now(),
+        lastResult: false,
+        account: normalizedAccount,
+      };
       setBackendAuthError(
         toUserFacingWalletError(authError, "Gagal auth ke backend.", {
           userRejectedMessage: "Sign in backend dibatalkan di wallet.",

@@ -20,6 +20,7 @@ const settlementPublicClient = createPublicClient({
   transport: http(env.MONAD_RPC_URL),
 });
 const GAME_SETTLEMENT_READ_ABI = parseAbi([
+  "function activeSessionOf(address player) view returns (bytes32)",
   "function getSession(bytes32 sessionId) view returns (address player, uint256 stakeAmount, uint64 startedAt, bool active, bool settled)",
 ]);
 
@@ -275,6 +276,134 @@ async function crashAndPersistSession(params: {
   return settlement;
 }
 
+async function persistRecoveredOnchainCrash(params: {
+  walletAddress: string;
+  onchainSessionId: string;
+  stakeAmount: number;
+  settlementSignature: string;
+  settlementDeadline: string;
+  settlementTxHash: string;
+}) {
+  const { data: existingSession, error: existingError } = await supabase
+    .from("game_sessions")
+    .select("session_id, status")
+    .eq("onchain_session_id", params.onchainSessionId)
+    .maybeSingle();
+
+  if (existingError) {
+    console.error(
+      `❌ Failed to inspect recovered onchain session ${params.onchainSessionId}:`,
+      existingError,
+    );
+    return;
+  }
+
+  const payload = {
+    wallet_address: params.walletAddress,
+    onchain_session_id: params.onchainSessionId,
+    stake_amount: params.stakeAmount,
+    status: "CRASHED",
+    max_row_reached: 0,
+    final_multiplier: 0,
+    payout_amount: 0,
+    settlement_signature: params.settlementSignature,
+    settlement_deadline: Number(params.settlementDeadline),
+    settlement_tx_hash: params.settlementTxHash,
+    ended_at: new Date().toISOString(),
+  };
+
+  if (!existingSession) {
+    const { error: insertError } = await supabase
+      .from("game_sessions")
+      .insert(payload);
+
+    if (insertError) {
+      console.error(
+        `❌ Failed to persist recovered onchain session ${params.onchainSessionId}:`,
+        insertError,
+      );
+      return;
+    }
+
+    await applyCrashPlayerStats(params.walletAddress, params.stakeAmount);
+    return;
+  }
+
+  const { error: updateError } = await supabase
+    .from("game_sessions")
+    .update(payload)
+    .eq("session_id", String(existingSession.session_id));
+
+  if (updateError) {
+    console.error(
+      `❌ Failed to update recovered onchain session ${params.onchainSessionId}:`,
+      updateError,
+    );
+    return;
+  }
+
+  if (String(existingSession.status ?? "") === "ACTIVE") {
+    await applyCrashPlayerStats(params.walletAddress, params.stakeAmount);
+  }
+}
+
+async function recoverOnchainActiveSession(walletAddress: string) {
+  const onchainSessionId = await settlementPublicClient.readContract({
+    address: env.GAME_SETTLEMENT_ADDRESS as Address,
+    abi: GAME_SETTLEMENT_READ_ABI,
+    functionName: "activeSessionOf",
+    args: [walletAddress as Address],
+  });
+
+  if (!isHex(onchainSessionId, { strict: true }) || /^0x0{64}$/i.test(onchainSessionId)) {
+    return null;
+  }
+
+  const session = await settlementPublicClient.readContract({
+    address: env.GAME_SETTLEMENT_ADDRESS as Address,
+    abi: GAME_SETTLEMENT_READ_ABI,
+    functionName: "getSession",
+    args: [onchainSessionId],
+  });
+
+  const player = String(session[0] || "").toLowerCase();
+  const stakeAmountUnits = session[1];
+  const active = Boolean(session[3]);
+  const settled = Boolean(session[4]);
+
+  if (player !== walletAddress.toLowerCase() || !active || settled) {
+    return null;
+  }
+
+  const stakeAmount = Number(stakeAmountUnits) / 1_000_000;
+  const settlement = await signSettlement({
+    playerAddress: walletAddress,
+    onchainSessionId,
+    stakeAmount,
+    payoutAmount: 0,
+    finalMultiplierBp: 0,
+    outcome: SETTLEMENT_OUTCOME.CRASHED,
+  });
+  const settlementTxHash = await submitSettlementOnchain({
+    resolution: settlement.resolution,
+    signature: settlement.signature,
+  });
+
+  await persistRecoveredOnchainCrash({
+    walletAddress,
+    onchainSessionId,
+    stakeAmount,
+    settlementSignature: settlement.signature,
+    settlementDeadline: settlement.resolution.deadline,
+    settlementTxHash,
+  });
+
+  return {
+    onchainSessionId,
+    settlementTxHash,
+  };
+}
+
 async function ensureSettlementSignature(
   walletAddress: string,
   session: Record<string, unknown>,
@@ -387,22 +516,36 @@ router.get("/active", requireAuth, async (req: Request, res: Response) => {
     return;
   }
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("game_sessions")
     .select("session_id, onchain_session_id, stake_amount, created_at")
     .eq("wallet_address", walletAddress)
     .eq("status", "ACTIVE")
-    .maybeSingle();
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.error("❌ Failed to fetch active session:", error);
+    res.status(500).json({ error: "Failed to inspect active session." });
+    return;
+  }
+
+  const latestSession = Array.isArray(data) && data.length > 0 ? data[0] : null;
 
   res.json({
-    hasActiveGame: !!data,
-    session: data || null,
+    hasActiveGame: !!latestSession,
+    session: latestSession,
   });
 });
 
 async function forceEndActiveSession(req: Request, res: Response) {
   const walletAddress = req.walletAddress!;
   const activeGame = getGameByWallet(walletAddress);
+  const resolvedSessions: Array<{
+    sessionId: string;
+    onchainSessionId: string;
+    source: "memory" | "database";
+  }> = [];
 
   if (activeGame) {
     const effectiveMultiplierBp = activeGame.timer.segmentActive
@@ -423,14 +566,11 @@ async function forceEndActiveSession(req: Request, res: Response) {
         finalMultiplier: effectiveMultiplierBp / 10_000,
       });
       removeGameState(walletAddress);
-      res.json({
-        success: true,
-        resolved: true,
-        source: "memory",
+      resolvedSessions.push({
         sessionId: activeGame.sessionId,
         onchainSessionId: activeGame.onchainSessionId,
+        source: "memory",
       });
-      return;
     } catch (error) {
       console.error("❌ Failed to force-end active in-memory game:", error);
       res.status(500).json({ error: "Failed to force-end active game." });
@@ -438,12 +578,13 @@ async function forceEndActiveSession(req: Request, res: Response) {
     }
   }
 
-  const { data: staleSession, error } = await supabase
+  const { data: staleSessions, error } = await supabase
     .from("game_sessions")
     .select("session_id, onchain_session_id, stake_amount, max_row_reached")
     .eq("wallet_address", walletAddress)
     .eq("status", "ACTIVE")
-    .maybeSingle();
+    .order("created_at", { ascending: false })
+    .limit(20);
 
   if (error) {
     console.error("❌ Failed to query active game session:", error);
@@ -451,31 +592,68 @@ async function forceEndActiveSession(req: Request, res: Response) {
     return;
   }
 
-  if (!staleSession) {
-    res.json({ success: true, resolved: false, source: "none" });
-    return;
+  for (const staleSession of staleSessions || []) {
+    try {
+      await crashAndPersistSession({
+        walletAddress,
+        sessionId: String(staleSession.session_id),
+        onchainSessionId: String(staleSession.onchain_session_id),
+        stakeAmount: Number(staleSession.stake_amount ?? 0),
+        maxRowReached: Number(staleSession.max_row_reached ?? 0),
+        finalMultiplier: 0,
+      });
+      resolvedSessions.push({
+        sessionId: String(staleSession.session_id),
+        onchainSessionId: String(staleSession.onchain_session_id),
+        source: "database",
+      });
+    } catch (forceEndError) {
+      console.error(
+        `❌ Failed to force-end stale active session ${String(staleSession.session_id)}:`,
+        forceEndError,
+      );
+    }
   }
 
-  try {
-    await crashAndPersistSession({
-      walletAddress,
-      sessionId: String(staleSession.session_id),
-      onchainSessionId: String(staleSession.onchain_session_id),
-      stakeAmount: Number(staleSession.stake_amount ?? 0),
-      maxRowReached: Number(staleSession.max_row_reached ?? 0),
-      finalMultiplier: 0,
-    });
-    res.json({
-      success: true,
-      resolved: true,
-      source: "database",
-      sessionId: staleSession.session_id,
-      onchainSessionId: staleSession.onchain_session_id,
-    });
-  } catch (forceEndError) {
-    console.error("❌ Failed to force-end stale active session:", forceEndError);
-    res.status(500).json({ error: "Failed to force-end stale active session." });
+  if (resolvedSessions.length === 0) {
+    try {
+      const recoveredOnchainSession = await recoverOnchainActiveSession(walletAddress);
+      if (!recoveredOnchainSession) {
+        res.json({ success: true, resolved: false, source: "none" });
+        return;
+      }
+
+      res.json({
+        success: true,
+        resolved: true,
+        source: "onchain",
+        resolvedCount: 1,
+        onchainSessionId: recoveredOnchainSession.onchainSessionId,
+        settlementTxHash: recoveredOnchainSession.settlementTxHash,
+      });
+      return;
+    } catch (recoverError) {
+      console.error("❌ Failed to recover orphaned onchain session:", recoverError);
+      res.status(500).json({
+        error: toSettlementErrorMessage(recoverError),
+      });
+      return;
+    }
   }
+
+  const sourceSet = new Set(resolvedSessions.map((session) => session.source));
+  const source =
+    sourceSet.size === 2
+      ? "memory+database"
+      : resolvedSessions[0]?.source || "database";
+
+  res.json({
+    success: true,
+    resolved: true,
+    source,
+    resolvedCount: resolvedSessions.length,
+    sessions: resolvedSessions,
+  });
 }
 
 async function getPendingSettlements(req: Request, res: Response) {

@@ -1021,6 +1021,40 @@ export function GameBridgeClient({
       return settledCount > 0;
     }
 
+    async function waitForOnchainSessionCleared(
+      playerAddress: Address,
+      options?: { attempts?: number; intervalMs?: number },
+    ) {
+      const attempts = Math.max(1, Number(options?.attempts || 6));
+      const intervalMs = Math.max(250, Number(options?.intervalMs || 1200));
+      let lastObservedSessionId = ZERO_BYTES32;
+
+      for (let index = 0; index < attempts; index += 1) {
+        try {
+          invalidateActiveSessionCache();
+          const activeSessionId = await readActiveSessionId(playerAddress);
+          lastObservedSessionId = activeSessionId || ZERO_BYTES32;
+          if (isZeroSessionId(activeSessionId)) {
+            return {
+              cleared: true,
+              activeSessionId: ZERO_BYTES32,
+            };
+          }
+        } catch (error) {
+          console.warn("⚠️ Failed to verify active session state:", error);
+        }
+
+        if (index < attempts - 1) {
+          await sleep(intervalMs);
+        }
+      }
+
+      return {
+        cleared: false,
+        activeSessionId: lastObservedSessionId,
+      };
+    }
+
     window.__CHICKEN_MONAD_BRIDGE__ = {
       backgroundMode: false,
       loadAvailableBalance: async () => {
@@ -1305,6 +1339,11 @@ export function GameBridgeClient({
             await settlePendingSettlements(pending.pendingSettlements, {
               targetOnchainSessionId: blocker.onchainSessionId,
             });
+
+            const remaining = await fetchPendingSettlements();
+            if (remaining.hasPending && remaining.pendingSettlements.length > 0) {
+              await settlePendingSettlements(remaining.pendingSettlements);
+            }
           }
         } else {
           emitDepositProgress("settle_sign", "Ending previous bet...");
@@ -1318,16 +1357,22 @@ export function GameBridgeClient({
             await settlePendingSettlements(pending.pendingSettlements, {
               targetOnchainSessionId: blocker.onchainSessionId,
             });
-          }
 
-          const refreshedActiveSessionId = await readActiveSessionId(
-            playerAddress,
-          );
-          if (!isZeroSessionId(refreshedActiveSessionId)) {
-            throw new Error(
-              `Masih ada session onchain lama yang aktif (${shortSessionId(refreshedActiveSessionId)}). Coba lagi sebentar.`,
-            );
+            const remaining = await fetchPendingSettlements();
+            if (remaining.hasPending && remaining.pendingSettlements.length > 0) {
+              await settlePendingSettlements(remaining.pendingSettlements);
+            }
           }
+        }
+
+        const onchainCheck = await waitForOnchainSessionCleared(playerAddress, {
+          attempts: 7,
+          intervalMs: 1200,
+        });
+        if (!onchainCheck.cleared) {
+          throw new Error(
+            `Masih ada session onchain lama yang aktif (${shortSessionId(onchainCheck.activeSessionId)}). Coba lagi sebentar.`,
+          );
         }
 
         const refreshedBlocker = await refreshPlayBlockerStatus();
