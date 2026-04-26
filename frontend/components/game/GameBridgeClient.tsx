@@ -6,6 +6,7 @@ import { formatUnits, isAddress, parseUnits } from "viem";
 import type { Address, Hash, Hex } from "viem";
 import {
   readContract,
+  simulateContract,
   waitForTransactionReceipt,
   writeContract,
 } from "@wagmi/core";
@@ -175,6 +176,55 @@ function toStartSessionFailureMessage(error: unknown, fallback: string) {
   return toUserFacingWalletError(error, fallback, {
     userRejectedMessage: "Start bet dibatalkan di wallet.",
   });
+}
+
+function toPassportClaimFailureMessage(error: unknown, fallback: string) {
+  const normalized = normalizeError(error, fallback).toLowerCase();
+
+  if (normalized.includes("invalidsignaturesigner")) {
+    return "Signer backend tidak cocok dengan signer passport on-chain. Minta admin update backend signer contract.";
+  }
+  if (normalized.includes("passportclaimexpired")) {
+    return "Signature passport sudah expired. Klik Claim Passport lagi untuk generate signature baru.";
+  }
+  if (normalized.includes("noncealreadyused")) {
+    return "Nonce claim passport sudah terpakai. Coba Claim Passport lagi.";
+  }
+  if (normalized.includes("stalepassportclaim")) {
+    return "Claim passport ini stale. Coba Claim Passport lagi untuk data terbaru.";
+  }
+  if (normalized.includes("invalidplayer")) {
+    return "Wallet aktif tidak cocok dengan payload claim passport.";
+  }
+  if (normalized.includes("invalidtier")) {
+    return "Tier passport tidak valid dari backend.";
+  }
+  if (normalized.includes("invalidissuedat") || normalized.includes("invalidexpiry")) {
+    return "Timestamp claim passport tidak valid. Coba lagi.";
+  }
+  if (normalized.includes("paused") || normalized.includes("enforcedpause")) {
+    return "Contract passport sedang pause. Coba lagi beberapa saat.";
+  }
+
+  return toUserFacingWalletError(error, fallback, {
+    userRejectedMessage: "Claim passport dibatalkan di wallet.",
+  });
+}
+
+function isLikelyNetworkIssue(error: unknown) {
+  const message = normalizeError(error, "").toLowerCase();
+  return [
+    "network",
+    "fetch",
+    "rpc",
+    "timeout",
+    "timed out",
+    "socket",
+    "disconnect",
+    "connection",
+    "rate limit",
+    "429",
+  ].some((pattern) => message.includes(pattern));
 }
 
 function toNumberAmount(value: bigint) {
@@ -1446,6 +1496,32 @@ export function GameBridgeClient({
 
         let txHash: string;
         try {
+          try {
+            await simulateContract(wagmiConfig, {
+              account: playerAddress,
+              address: TRUST_PASSPORT_ADDRESS as Address,
+              abi: TRUST_PASSPORT_ABI,
+              functionName: "claimWithSignature",
+              args: [
+                {
+                  player: claim.player as Address,
+                  tier: Number(claim.tier),
+                  issuedAt: BigInt(claim.issuedAt),
+                  expiry: BigInt(claim.expiry),
+                  nonce: BigInt(claim.nonce),
+                },
+                signature as Hex,
+              ],
+            });
+          } catch (error) {
+            if (!isLikelyNetworkIssue(error)) {
+              throw new Error(
+                toPassportClaimFailureMessage(error, "Claim passport gagal."),
+              );
+            }
+            console.warn("⚠️ Passport simulate skipped due to network/RPC issue:", error);
+          }
+
           txHash = await writeAndConfirm({
             address: TRUST_PASSPORT_ADDRESS as Address,
             abi: TRUST_PASSPORT_ABI,
@@ -1463,9 +1539,7 @@ export function GameBridgeClient({
           });
         } catch (error) {
           throw new Error(
-            toUserFacingWalletError(error, "Claim passport gagal.", {
-              userRejectedMessage: "Claim passport dibatalkan di wallet.",
-            }),
+            toPassportClaimFailureMessage(error, "Claim passport gagal."),
           );
         }
 
