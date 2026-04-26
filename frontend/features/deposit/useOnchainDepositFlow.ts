@@ -73,7 +73,7 @@ function compactWalletErrorMessage(message: string) {
 function toUserFacingError(
   error: unknown,
   fallback: string,
-  rejectedMessage = "Transaksi dibatalkan di wallet.",
+  rejectedMessage = "Transaction was canceled in wallet.",
 ) {
   if (isUserRejectedRequestError(error)) {
     return rejectedMessage;
@@ -286,7 +286,7 @@ export function useOnchainDepositFlow(): DepositFlowViewModel {
 
     setHandledApproveHash(approveTxHash);
     setUiError("");
-    setStatusMessage("Approve confirmed. Kamu bisa lanjut deposit.");
+    setStatusMessage("Approve confirmed. You can continue with deposit.");
     void refetchAllowance();
   }, [approveTxHash, handledApproveHash, isApproveConfirmed, refetchAllowance]);
 
@@ -354,7 +354,7 @@ export function useOnchainDepositFlow(): DepositFlowViewModel {
 
   async function onClaimFaucet() {
     if (!canTransact || !faucetAddress) {
-      setUiError("Pastikan wallet connect, sudah di Monad, dan config faucet valid.");
+      setUiError("Make sure wallet is connected, on Monad, and faucet config is valid.");
       return;
     }
 
@@ -371,8 +371,8 @@ export function useOnchainDepositFlow(): DepositFlowViewModel {
       setUiError(
         toUserFacingError(
           faucetError,
-          "Faucet claim gagal.",
-          "Klaim faucet dibatalkan di wallet.",
+          "Faucet claim failed.",
+          "Faucet claim was canceled in wallet.",
         ),
       );
     }
@@ -380,7 +380,7 @@ export function useOnchainDepositFlow(): DepositFlowViewModel {
 
   async function onApprove() {
     if (!canTransact || !usdcAddress || !vaultAddress) {
-      setUiError("Pastikan wallet connect, sudah di Monad, dan config contract valid.");
+      setUiError("Make sure wallet is connected, on Monad, and contract config is valid.");
       return;
     }
     if (!parsedAmount) {
@@ -402,8 +402,8 @@ export function useOnchainDepositFlow(): DepositFlowViewModel {
       setUiError(
         toUserFacingError(
           approveError,
-          "Approve gagal.",
-          "Approve dibatalkan di wallet.",
+          "Approve failed.",
+          "Approve was canceled in wallet.",
         ),
       );
     }
@@ -411,7 +411,7 @@ export function useOnchainDepositFlow(): DepositFlowViewModel {
 
   async function onDeposit() {
     if (!canTransact || !vaultAddress) {
-      setUiError("Pastikan wallet connect, sudah di Monad, dan config contract valid.");
+      setUiError("Make sure wallet is connected, on Monad, and contract config is valid.");
       return;
     }
     if (!parsedAmount) {
@@ -427,15 +427,15 @@ export function useOnchainDepositFlow(): DepositFlowViewModel {
           functionName: "approve",
           args: [vaultAddress, MAX_UINT256],
         });
-        setStatusMessage("Approval submitted. Silakan tunggu konfirmasi...");
+        setStatusMessage("Approval submitted. Please wait for confirmation...");
         return; // Wait for approval confirmation effect to update state
       } catch (approveError) {
         setStatusMessage("");
         setUiError(
           toUserFacingError(
             approveError,
-            "Approve gagal.",
-            "Approve dibatalkan di wallet.",
+            "Approve failed.",
+            "Approve was canceled in wallet.",
           ),
         );
         return;
@@ -456,8 +456,8 @@ export function useOnchainDepositFlow(): DepositFlowViewModel {
       setUiError(
         toUserFacingError(
           depositError,
-          "Deposit gagal.",
-          "Deposit dibatalkan di wallet.",
+          "Deposit failed.",
+          "Deposit was canceled in wallet.",
         ),
       );
     }
@@ -465,7 +465,7 @@ export function useOnchainDepositFlow(): DepositFlowViewModel {
 
   async function onWithdraw() {
     if (!canTransact || !vaultAddress) {
-      setUiError("Pastikan wallet connect, sudah di Monad, dan config contract valid.");
+      setUiError("Make sure wallet is connected, on Monad, and contract config is valid.");
       return;
     }
     if (!parsedAmount) {
@@ -473,7 +473,7 @@ export function useOnchainDepositFlow(): DepositFlowViewModel {
       return;
     }
     if (parsedAmount > availableBalance) {
-      setUiError("Available balance di vault tidak cukup untuk withdraw.");
+      setUiError("Available vault balance is insufficient for withdrawal.");
       return;
     }
 
@@ -491,8 +491,8 @@ export function useOnchainDepositFlow(): DepositFlowViewModel {
       setUiError(
         toUserFacingError(
           withdrawError,
-          "Withdraw gagal.",
-          "Withdraw dibatalkan di wallet.",
+          "Withdraw failed.",
+          "Withdraw was canceled in wallet.",
         ),
       );
     }
@@ -567,7 +567,7 @@ export function useOnchainDepositFlow(): DepositFlowViewModel {
     onDeposit,
     onWithdraw,
     configMessage: !hasValidContracts
-      ? "Contract config belum valid. Isi address yang benar termasuk faucet di `frontend/.env.local`."
+      ? "Contract config is invalid. Fill valid addresses including faucet in `frontend/.env.local`."
       : "",
   };
 }

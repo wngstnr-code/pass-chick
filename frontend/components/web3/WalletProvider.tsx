@@ -145,8 +145,8 @@ export function WalletProvider({ children }: WalletProviderProps) {
       await open();
     } catch (connectError) {
       setError(
-        toUserFacingWalletError(connectError, "Gagal membuka modal wallet.", {
-          userRejectedMessage: "Connect wallet dibatalkan.",
+        toUserFacingWalletError(connectError, "Failed to open wallet modal.", {
+          userRejectedMessage: "Connect wallet was canceled.",
         }),
       );
     } finally {
@@ -173,7 +173,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
   async function addMonadChainToWallet() {
     const provider = getEip1193Provider();
     if (!provider) {
-      setError("Wallet EVM tidak terdeteksi.");
+      setError("EVM wallet not detected.");
       return;
     }
 
@@ -193,13 +193,13 @@ export function WalletProvider({ children }: WalletProviderProps) {
 
   async function switchToMonad() {
     if (!isConnected) {
-      setError("Connect wallet dulu sebelum switch chain.");
+      setError("Connect wallet first before switching chain.");
       return;
     }
 
     if (!hasMonadConfig) {
       setError(
-        "Config Monad belum lengkap. Isi dulu variabel di frontend/.env.local.",
+        "Monad config is incomplete. Fill the variables in frontend/.env.local.",
       );
       return;
     }
@@ -219,8 +219,8 @@ export function WalletProvider({ children }: WalletProviderProps) {
 
       if (!shouldTryAddChain) {
         setError(
-          toUserFacingWalletError(switchError, "Gagal switch ke chain Monad.", {
-            userRejectedMessage: "Switch chain dibatalkan di wallet.",
+          toUserFacingWalletError(switchError, "Failed to switch to Monad chain.", {
+            userRejectedMessage: "Chain switch was canceled in wallet.",
           }),
         );
         return;
@@ -234,9 +234,9 @@ export function WalletProvider({ children }: WalletProviderProps) {
       setError(
         toUserFacingWalletError(
           addChainError,
-          "Gagal menambahkan chain Monad.",
+          "Failed to add Monad chain.",
           {
-            userRejectedMessage: "Penambahan chain dibatalkan di wallet.",
+            userRejectedMessage: "Adding chain was canceled in wallet.",
           },
         ),
       );
@@ -319,12 +319,12 @@ export function WalletProvider({ children }: WalletProviderProps) {
   async function authenticateBackend() {
     if (!hasBackendConfig) {
       setBackendAuthError(
-        "Config backend belum lengkap. Isi NEXT_PUBLIC_BACKEND_API_URL dulu.",
+        "Backend config is incomplete. Set NEXT_PUBLIC_BACKEND_API_URL first.",
       );
       return false;
     }
     if (!isConnected || !account) {
-      setBackendAuthError("Connect wallet dulu sebelum sign in ke backend.");
+      setBackendAuthError("Connect wallet first before signing in to backend.");
       return false;
     }
 
@@ -374,8 +374,8 @@ export function WalletProvider({ children }: WalletProviderProps) {
         account: normalizedAccount,
       };
       setBackendAuthError(
-        toUserFacingWalletError(authError, "Gagal auth ke backend.", {
-          userRejectedMessage: "Sign in backend dibatalkan di wallet.",
+        toUserFacingWalletError(authError, "Failed to authenticate with backend.", {
+          userRejectedMessage: "Backend sign-in was canceled in wallet.",
         }),
       );
       return false;
@@ -480,7 +480,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
 export function useWallet() {
   const value = useContext(WalletContext);
   if (!value) {
-    throw new Error("useWallet harus dipakai di dalam WalletProvider.");
+    throw new Error("useWallet must be used inside WalletProvider.");
   }
   return value;
 }

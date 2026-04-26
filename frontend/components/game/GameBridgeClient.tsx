@@ -163,43 +163,43 @@ function toStartSessionFailureMessage(error: unknown, fallback: string) {
   const normalized = normalizeError(error, fallback).toLowerCase();
 
   if (normalized.includes("insufficientavailablebalance")) {
-    return "Saldo available di vault tidak cukup untuk nominal bet ini. Deposit dulu atau kecilkan stake.";
+    return "Available vault balance is insufficient for this bet amount. Deposit first or lower your stake.";
   }
   if (normalized.includes("sessionalreadyactive")) {
-    return "Masih ada session aktif on-chain. Selesaikan settlement run sebelumnya dulu lalu coba lagi.";
+    return "There is still an active on-chain session. Resolve the previous run settlement first, then try again.";
   }
   if (normalized.includes("invalidstakeamount")) {
-    return "Nominal stake tidak valid untuk kontrak settlement.";
+    return "Stake amount is invalid for the settlement contract.";
   }
   if (normalized.includes("invalidsessionid")) {
-    return "Session ID on-chain tidak valid. Coba start bet ulang.";
+    return "On-chain session ID is invalid. Please start the bet again.";
   }
   if (normalized.includes("enforcedpause") || normalized.includes("paused")) {
-    return "Contract settlement sedang pause. Coba lagi beberapa saat.";
+    return "Settlement contract is currently paused. Please try again shortly.";
   }
 
   return toUserFacingWalletError(error, fallback, {
-    userRejectedMessage: "Start bet dibatalkan di wallet.",
+    userRejectedMessage: "Start bet was canceled in wallet.",
   });
 }
 
 const PASSPORT_ERROR_SELECTOR_TO_MESSAGE: Record<string, string> = {
   "0xbf18af43":
-    "Signer backend passport tidak valid. Minta admin cek signer contract.",
+    "Backend passport signer is invalid. Ask admin to check contract signer.",
   "0x870973b7":
-    "Wallet aktif tidak cocok dengan payload claim passport.",
-  "0xbca1a956": "Tier passport tidak valid dari backend.",
-  "0x45a4a1a9": "IssuedAt claim passport tidak valid.",
-  "0x5e23ca68": "Expiry claim passport tidak valid.",
+    "Active wallet does not match claim passport payload.",
+  "0xbca1a956": "Passport tier from backend is invalid.",
+  "0x45a4a1a9": "Claim passport issuedAt is invalid.",
+  "0x5e23ca68": "Claim passport expiry is invalid.",
   "0x41ad2e5f":
-    "Signature passport sudah expired. Klik Claim Passport lagi untuk generate signature baru.",
+    "Passport signature has expired. Click Claim Passport again to generate a new signature.",
   "0x91cab504":
-    "Nonce claim passport sudah terpakai. Coba Claim Passport lagi.",
+    "Passport claim nonce is already used. Try Claim Passport again.",
   "0x5b1819a3":
-    "Signer backend tidak sinkron dengan signer passport on-chain. Minta admin update signer contract.",
+    "Backend signer is not synchronized with on-chain passport signer. Ask admin to update the contract signer.",
   "0x78c05879":
-    "Claim passport stale (issuedAt lama). Coba Claim Passport lagi.",
-  "0x8f470554": "Passport wallet ini sudah direvoke.",
+    "Passport claim is stale (old issuedAt). Try Claim Passport again.",
+  "0x8f470554": "This wallet passport has already been revoked.",
 };
 
 function extractErrorSelector(error: unknown) {
@@ -291,32 +291,32 @@ function toPassportClaimFailureMessage(error: unknown, fallback: string) {
   const normalized = normalizeError(error, fallback).toLowerCase();
 
   if (normalized.includes("invalidsignaturesigner")) {
-    return "Signer backend tidak cocok dengan signer passport on-chain. Minta admin update backend signer contract.";
+    return "Backend signer does not match on-chain passport signer. Ask admin to update backend contract signer.";
   }
   if (normalized.includes("passportclaimexpired")) {
-    return "Signature passport sudah expired. Klik Claim Passport lagi untuk generate signature baru.";
+    return "Passport signature has expired. Click Claim Passport again to generate a new signature.";
   }
   if (normalized.includes("noncealreadyused")) {
-    return "Nonce claim passport sudah terpakai. Coba Claim Passport lagi.";
+    return "Passport claim nonce is already used. Try Claim Passport again.";
   }
   if (normalized.includes("stalepassportclaim")) {
-    return "Claim passport ini stale. Coba Claim Passport lagi untuk data terbaru.";
+    return "This passport claim is stale. Try Claim Passport again for fresh data.";
   }
   if (normalized.includes("invalidplayer")) {
-    return "Wallet aktif tidak cocok dengan payload claim passport.";
+    return "Active wallet does not match claim passport payload.";
   }
   if (normalized.includes("invalidtier")) {
-    return "Tier passport tidak valid dari backend.";
+    return "Passport tier from backend is invalid.";
   }
   if (normalized.includes("invalidissuedat") || normalized.includes("invalidexpiry")) {
-    return "Timestamp claim passport tidak valid. Coba lagi.";
+    return "Passport claim timestamp is invalid. Please try again.";
   }
   if (normalized.includes("paused") || normalized.includes("enforcedpause")) {
-    return "Contract passport sedang pause. Coba lagi beberapa saat.";
+    return "Passport contract is currently paused. Please try again shortly.";
   }
 
   return toUserFacingWalletError(error, fallback, {
-    userRejectedMessage: "Claim passport dibatalkan di wallet.",
+    userRejectedMessage: "Passport claim was canceled in wallet.",
   });
 }
 
@@ -444,17 +444,17 @@ export function GameBridgeClient({
           );
         },
         claimFaucet: async () => {
-          throw new Error("Background mode tidak mendukung faucet claim.");
+          throw new Error("Background mode does not support faucet claim.");
         },
         depositToVault: async () => {
-          throw new Error("Background mode tidak mendukung deposit.");
+          throw new Error("Background mode does not support deposit.");
         },
         startBet: async () => {
-          throw new Error("Background mode tidak mendukung start bet.");
+          throw new Error("Background mode does not support start bet.");
         },
         sendMove: () => {},
         cashOut: async () => {
-          throw new Error("Background mode tidak mendukung cash out.");
+          throw new Error("Background mode does not support cash out.");
         },
         crash: async () => null,
         autoSettlePending: async () => false,
@@ -482,7 +482,7 @@ export function GameBridgeClient({
           },
         }),
         claimPassport: async () => {
-          throw new Error("Background mode tidak mendukung claim passport.");
+          throw new Error("Background mode does not support passport claim.");
         },
       };
 
@@ -497,7 +497,7 @@ export function GameBridgeClient({
       }
 
       if (!hasBackendApiConfig() || !BACKEND_API_URL) {
-        throw new Error("NEXT_PUBLIC_BACKEND_API_URL belum diisi.");
+        throw new Error("NEXT_PUBLIC_BACKEND_API_URL is not set.");
       }
 
       const socket = io(BACKEND_API_URL, {
@@ -559,7 +559,7 @@ export function GameBridgeClient({
         activeSessionIdRef.current = "";
         const message =
           payload?.message ||
-          "Transaksi startSession gagal/revert. Silakan start bet ulang.";
+          "startSession transaction failed/reverted. Please start the bet again.";
         void refreshPlayBlockerStatus();
         window.dispatchEvent(
           new CustomEvent("chicken:start-bet-failed", {
@@ -587,7 +587,7 @@ export function GameBridgeClient({
       socket.on("error", (payload: { message?: string } | string) => {
         const message = toUserFacingWalletError(
           typeof payload === "string" ? payload : payload?.message || "",
-          "Socket error dari backend.",
+          "Socket error from backend.",
         );
         const hadPendingRequest = Boolean(
           pendingStartRef.current ||
@@ -623,7 +623,7 @@ export function GameBridgeClient({
 
         const message =
           reason === "io server disconnect"
-            ? "Socket diputus server. Sign in backend lagi lalu coba start bet."
+            ? "Socket was disconnected by server. Sign in to backend again, then try starting bet."
             : `Socket disconnected: ${reason}`;
 
         rejectPendingRequest(pendingStartRef.current, message);
@@ -639,7 +639,7 @@ export function GameBridgeClient({
 
         if (reason === "io server disconnect") {
           const expiredMessage =
-            "Run pause gagal dipulihkan karena socket diputus server. Sign in backend lagi lalu start ulang.";
+            "Failed to restore paused run because socket was disconnected by server. Sign in to backend again and restart.";
           activeSessionIdRef.current = "";
           window.dispatchEvent(
             new CustomEvent("chicken:game-reconnect-expired", {
@@ -664,7 +664,7 @@ export function GameBridgeClient({
             new CustomEvent("chicken:game-reconnect-expired", {
               detail: {
                 message:
-                  "Koneksi ke server terlalu lama putus. Run dianggap berakhir dan akan disinkronkan saat kamu mulai lagi.",
+                  "Connection to server was lost for too long. The run is considered ended and will be synchronized when you start again.",
               },
             }),
           );
@@ -733,13 +733,13 @@ export function GameBridgeClient({
 
     async function requireOnchainWallet() {
       if (!account || !isAddress(account)) {
-        throw new Error("Connect wallet dulu sebelum main.");
+        throw new Error("Connect wallet first before playing.");
       }
       if (!isMonadChain) {
-        throw new Error("Switch wallet ke Monad dulu sebelum main.");
+        throw new Error("Switch wallet to Monad first before playing.");
       }
       if (!hasGameContractConfig()) {
-        throw new Error("Config contract frontend belum lengkap.");
+        throw new Error("Frontend contract config is incomplete.");
       }
       return account as Address;
     }
@@ -815,13 +815,13 @@ export function GameBridgeClient({
     async function requireReadyGameWallet() {
       const playerAddress = await requireOnchainWallet();
       if (!hasBackendConfig) {
-        throw new Error("Config backend frontend belum lengkap.");
+        throw new Error("Frontend backend config is incomplete.");
       }
 
       const authOkay = await ensureBackendSession();
       if (!authOkay) {
         throw new Error(
-          "Backend session belum aktif. Sign in ke backend dulu.",
+          "Backend session is not active yet. Sign in to backend first.",
         );
       }
 
@@ -830,16 +830,16 @@ export function GameBridgeClient({
 
     async function requireBackendWalletSession() {
       if (!account || !isAddress(account)) {
-        throw new Error("Connect wallet dulu untuk melihat player stats.");
+        throw new Error("Connect wallet first to view player stats.");
       }
       if (!hasBackendConfig) {
-        throw new Error("Config backend frontend belum lengkap.");
+        throw new Error("Frontend backend config is incomplete.");
       }
 
       const authOkay = await ensureBackendSession();
       if (!authOkay) {
         throw new Error(
-          "Backend session belum aktif. Connect wallet lalu sign in dulu.",
+          "Backend session is not active yet. Connect wallet and sign in first.",
         );
       }
 
@@ -1011,7 +1011,7 @@ export function GameBridgeClient({
       try {
         return await backendFetch<ActiveBackendSessionPayload>("/api/game/active");
       } catch (err) {
-        console.error("❌ Gagal fetch active session:", err);
+        console.error("❌ Failed to fetch active session:", err);
         return {
           hasActiveGame: false,
           session: null,
@@ -1026,7 +1026,7 @@ export function GameBridgeClient({
           pendingSettlements: any[];
         }>("/api/game/pending-settlement");
       } catch (err) {
-        console.error("❌ Gagal fetch pending settlement:", err);
+        console.error("❌ Failed to fetch pending settlement:", err);
         return {
           hasPending: false,
           pendingSettlements: [],
@@ -1151,11 +1151,11 @@ export function GameBridgeClient({
           console.log(`✅ Old session ${s.session_id} settled by backend.`);
           settledCount += 1;
         } catch (err) {
-          console.error(`❌ Gagal settle old session ${s.session_id}:`, err);
+          console.error(`❌ Failed to settle old session ${s.session_id}:`, err);
           if (!firstFailureMessage) {
             firstFailureMessage = normalizeError(
               err,
-              "Settlement pending gagal diproses.",
+              "Failed to process pending settlement.",
             );
           }
           failedCount += 1;
@@ -1166,11 +1166,11 @@ export function GameBridgeClient({
         emitDepositProgress(
           "settle_incomplete",
           firstFailureMessage ||
-            `${failedCount} pending settlement belum berhasil disettle.`,
+            `${failedCount} pending settlement is not settled yet.`,
         );
         throw new Error(
           firstFailureMessage ||
-            `${failedCount} pending settlement belum berhasil disettle. Coba lagi sebelum start bet.`,
+            `${failedCount} pending settlement is not settled yet. Try again before starting a bet.`,
         );
       }
 
@@ -1259,7 +1259,7 @@ export function GameBridgeClient({
       },
       loadLeaderboard: async () => {
         if (!hasBackendConfig) {
-          throw new Error("Config backend frontend belum lengkap.");
+          throw new Error("Frontend backend config is incomplete.");
         }
 
         const payload = await backendFetch<{
@@ -1321,7 +1321,7 @@ export function GameBridgeClient({
       claimFaucet: async () => {
         const playerAddress = await requireOnchainWallet();
         if (!isAddress(USDC_FAUCET_ADDRESS)) {
-          throw new Error("Config faucet contract belum valid.");
+          throw new Error("Faucet contract config is invalid.");
         }
 
         let txHash: string;
@@ -1333,8 +1333,8 @@ export function GameBridgeClient({
           });
         } catch (error) {
           throw new Error(
-            toUserFacingWalletError(error, "Claim faucet gagal.", {
-              userRejectedMessage: "Claim faucet dibatalkan di wallet.",
+            toUserFacingWalletError(error, "Failed to claim faucet.", {
+              userRejectedMessage: "Faucet claim was canceled in wallet.",
             }),
           );
         }
@@ -1348,7 +1348,7 @@ export function GameBridgeClient({
         const playerAddress = await requireOnchainWallet();
 
         if (!isAddress(USDC_ADDRESS) || !isAddress(GAME_VAULT_ADDRESS)) {
-          throw new Error("Config USDC/Vault contract belum valid.");
+          throw new Error("USDC/Vault contract config is invalid.");
         }
 
         const normalizedAmount = String(amountInput || "").trim();
@@ -1356,11 +1356,11 @@ export function GameBridgeClient({
         try {
           amountUnits = parseUnits(normalizedAmount, USDC_DECIMALS);
         } catch {
-          throw new Error("Amount deposit tidak valid.");
+          throw new Error("Deposit amount is invalid.");
         }
 
         if (amountUnits <= 0n) {
-          throw new Error("Amount deposit harus lebih dari 0.");
+          throw new Error("Deposit amount must be greater than 0.");
         }
 
         emitDepositProgress(
@@ -1376,7 +1376,7 @@ export function GameBridgeClient({
         });
 
         if (walletBalanceUnits < amountUnits) {
-          throw new Error("Saldo wallet USDC kurang. Claim faucet dulu.");
+          throw new Error("Insufficient wallet USDC balance. Claim faucet first.");
         }
 
         let approveTxHash: string | undefined;
@@ -1395,8 +1395,8 @@ export function GameBridgeClient({
             })) as string;
           } catch (error) {
             throw new Error(
-              toUserFacingWalletError(error, "Approve USDC gagal.", {
-                userRejectedMessage: "Approve USDC dibatalkan di wallet.",
+              toUserFacingWalletError(error, "USDC approve failed.", {
+                userRejectedMessage: "USDC approve was canceled in wallet.",
               }),
             );
           }
@@ -1410,9 +1410,9 @@ export function GameBridgeClient({
             });
           } catch (error) {
             throw new Error(
-              toUserFacingWalletError(error, "Approve USDC belum terkonfirmasi.", {
+              toUserFacingWalletError(error, "USDC approve is not confirmed yet.", {
                 networkMessage:
-                  "Konfirmasi approve belum terbaca. Cek wallet atau explorer lalu coba lagi.",
+                  "Approve confirmation not detected yet. Check wallet or explorer, then try again.",
               }),
             );
           }
@@ -1429,8 +1429,8 @@ export function GameBridgeClient({
           })) as string;
         } catch (error) {
           throw new Error(
-            toUserFacingWalletError(error, "Deposit gagal.", {
-              userRejectedMessage: "Deposit dibatalkan di wallet.",
+            toUserFacingWalletError(error, "Deposit failed.", {
+              userRejectedMessage: "Deposit was canceled in wallet.",
             }),
           );
         }
@@ -1444,9 +1444,9 @@ export function GameBridgeClient({
           });
         } catch (error) {
           throw new Error(
-            toUserFacingWalletError(error, "Deposit belum terkonfirmasi.", {
+            toUserFacingWalletError(error, "Deposit is not confirmed yet.", {
               networkMessage:
-                "Konfirmasi deposit belum terbaca. Cek wallet atau explorer lalu coba lagi.",
+                "Deposit confirmation not detected yet. Check wallet or explorer, then try again.",
             }),
           );
         }
@@ -1531,7 +1531,7 @@ export function GameBridgeClient({
         });
         if (!onchainCheck.cleared) {
           throw new Error(
-            `Masih ada session onchain lama yang aktif (${shortSessionId(onchainCheck.activeSessionId)}). Coba lagi sebentar.`,
+            `There is still an old active on-chain session (${shortSessionId(onchainCheck.activeSessionId)}). Please try again shortly.`,
           );
         }
 
@@ -1545,7 +1545,7 @@ export function GameBridgeClient({
       claimPassport: async () => {
         const playerAddress = await requireReadyGameWallet();
         if (!hasPassportContractConfig() || !isAddress(TRUST_PASSPORT_ADDRESS)) {
-          throw new Error("Config TRUST_PASSPORT_ADDRESS belum valid.");
+          throw new Error("TRUST_PASSPORT_ADDRESS config is invalid.");
         }
 
         const status = await backendFetch<ChickenBridgePassportStatus>(
@@ -1553,7 +1553,7 @@ export function GameBridgeClient({
         );
         if (!status.eligibility?.eligible || status.eligibility.tier <= 0) {
           throw new Error(
-            status.eligibility?.reason || "Belum eligible untuk claim passport.",
+            status.eligibility?.reason || "Not eligible to claim passport yet.",
           );
         }
 
@@ -1566,7 +1566,7 @@ export function GameBridgeClient({
         const signature = String(issued?.signature || "");
         if (!claim || !signature) {
           throw new Error(
-            "Backend tidak mengembalikan signature passport yang valid.",
+            "Backend did not return a valid passport signature.",
           );
         }
 
@@ -1575,7 +1575,7 @@ export function GameBridgeClient({
           String(playerAddress).toLowerCase()
         ) {
           throw new Error(
-            "Signer payload player tidak cocok dengan wallet aktif.",
+            "Signer payload player does not match active wallet.",
           );
         }
 
@@ -1587,7 +1587,7 @@ export function GameBridgeClient({
           backendDomainChainId !== appChainId
         ) {
           throw new Error(
-            `Chain ID backend (${backendDomainChainId}) tidak sama dengan frontend (${appChainId}).`,
+            `Backend chain ID (${backendDomainChainId}) does not match frontend (${appChainId}).`,
           );
         }
 
@@ -1599,13 +1599,13 @@ export function GameBridgeClient({
           backendDomainContract !== String(TRUST_PASSPORT_ADDRESS).toLowerCase()
         ) {
           throw new Error(
-            "TRUST_PASSPORT_ADDRESS backend dan frontend tidak sama.",
+            "Backend and frontend TRUST_PASSPORT_ADDRESS do not match.",
           );
         }
 
         const issuedSignerAddress = String(issued?.signerAddress || "").toLowerCase();
         if (!isAddress(issuedSignerAddress)) {
-          throw new Error("Backend tidak mengembalikan signerAddress passport yang valid.");
+          throw new Error("Backend did not return a valid passport signerAddress.");
         }
 
         let onchainBackendSigner = "";
@@ -1619,19 +1619,19 @@ export function GameBridgeClient({
           ).toLowerCase();
         } catch {
           throw new Error(
-            "Gagal verifikasi signer passport on-chain. Cek RPC/konfigurasi contract.",
+            "Failed to verify on-chain passport signer. Check RPC/contract configuration.",
           );
         }
 
         if (onchainBackendSigner !== issuedSignerAddress) {
           throw new Error(
-            "Signer backend tidak sinkron dengan signer passport on-chain. Minta admin update signer contract.",
+            "Backend signer is not synchronized with on-chain passport signer. Ask admin to update the contract signer.",
           );
         }
 
         if (Number(claim.expiry) <= Math.floor(Date.now() / 1000)) {
           throw new Error(
-            "Signature passport sudah expired. Klik Claim Passport lagi.",
+            "Passport signature has expired. Click Claim Passport again.",
           );
         }
 
@@ -1657,17 +1657,17 @@ export function GameBridgeClient({
           ]);
 
           if (Boolean(isPaused)) {
-            throw new Error("Contract passport sedang pause.");
+            throw new Error("Passport contract is currently paused.");
           }
           if (Boolean(isNonceUsed)) {
-            throw new Error("Nonce claim passport sudah terpakai. Coba claim ulang.");
+            throw new Error("Passport claim nonce is already used. Try claiming again.");
           }
 
           const currentIssuedAt = Number(currentPassport?.[1] ?? 0);
           const nextIssuedAt = Number(claim.issuedAt);
           if (currentIssuedAt > 0 && nextIssuedAt < currentIssuedAt) {
             throw new Error(
-              "Claim passport stale (issuedAt lebih lama dari data on-chain). Coba claim ulang.",
+              "Passport claim is stale (issuedAt older than on-chain data). Try claiming again.",
             );
           }
         } catch (error) {
@@ -1699,7 +1699,7 @@ export function GameBridgeClient({
           } catch (error) {
             if (!isLikelyNetworkIssue(error)) {
               throw new Error(
-                toPassportClaimFailureMessage(error, "Claim passport gagal."),
+                toPassportClaimFailureMessage(error, "Failed to claim passport."),
               );
             }
             console.warn("⚠️ Passport simulate skipped due to network/RPC issue:", error);
@@ -1753,7 +1753,7 @@ export function GameBridgeClient({
             causeMetaMessages: err?.cause?.metaMessages,
           });
           throw new Error(
-            toPassportClaimFailureMessage(error, "Claim passport gagal."),
+            toPassportClaimFailureMessage(error, "Failed to claim passport."),
           );
         }
 
@@ -1777,10 +1777,10 @@ export function GameBridgeClient({
           throw new Error(
             toUserFacingWalletError(
               err,
-              "Pending settlement belum selesai. Selesaikan dulu sebelum start bet baru.",
+              "Pending settlement is not finished. Resolve it before starting a new bet.",
               {
                 userRejectedMessage:
-                  "Settlement session lama dibatalkan di wallet. Selesaikan dulu sebelum start bet lagi.",
+                  "Old settlement session was canceled in wallet. Resolve it before starting bet again.",
               },
             ),
           );
@@ -1799,7 +1799,7 @@ export function GameBridgeClient({
 
         if (availableBalanceUnits < stakeAmountUnits) {
           throw new Error(
-            `Saldo available vault kurang. Tersedia ${toNumberAmount(availableBalanceUnits).toFixed(2)} USDC, butuh ${stake.toFixed(2)} USDC.`,
+            `Insufficient available vault balance. Available ${toNumberAmount(availableBalanceUnits).toFixed(2)} USDC, required ${stake.toFixed(2)} USDC.`,
           );
         }
 
@@ -1807,10 +1807,10 @@ export function GameBridgeClient({
           emitPlayBlocker(blocker);
           throw new Error(
             blocker.kind === "pending_settlement"
-              ? "Prev bet masih butuh settlement. Klik END NOW dulu sebelum start bet baru."
+              ? "Previous bet still needs settlement. Click END NOW before starting a new bet."
               : blocker.onchainSessionId
-                ? `Masih ada session onchain lama yang aktif (${shortSessionId(blocker.onchainSessionId)}). Klik END NOW dulu sebelum start bet baru.`
-                : "Prev bet masih belum selesai. Klik END NOW dulu sebelum start bet baru.",
+                ? `There is still an old active on-chain session (${shortSessionId(blocker.onchainSessionId)}). Click END NOW before starting a new bet.`
+                : "Previous bet is not finished yet. Click END NOW before starting a new bet.",
           );
         }
 
@@ -1825,7 +1825,7 @@ export function GameBridgeClient({
           payload = await pendingStart;
         } catch (error) {
           throw new Error(
-            toUserFacingWalletError(error, "Gagal memulai game di backend."),
+            toUserFacingWalletError(error, "Failed to start game on backend."),
           );
         }
 
@@ -1857,7 +1857,7 @@ export function GameBridgeClient({
               throw new Error(
                 toStartSessionFailureMessage(
                   error,
-                  "Transaksi startSession gagal/revert.",
+                  "startSession transaction failed/reverted.",
                 ),
               );
             }
@@ -1866,7 +1866,7 @@ export function GameBridgeClient({
               new CustomEvent("chicken:game-error", {
                 detail: {
                   message:
-                    "Konfirmasi startSession masih pending/network issue. Jangan refresh; cek tx di wallet explorer.",
+                    "startSession confirmation is still pending/network issue. Do not refresh; check tx in wallet explorer.",
                 },
               }),
             );
@@ -1885,7 +1885,7 @@ export function GameBridgeClient({
           throw new Error(
             toStartSessionFailureMessage(
               error,
-              "Transaksi startSession gagal/revert.",
+              "startSession transaction failed/reverted.",
             ),
           );
         }
@@ -1908,7 +1908,7 @@ export function GameBridgeClient({
         const settlementSignature =
           payload.settlementSignature || payload.signature || "";
         if (!settlementResolution) {
-          throw new Error("Payload settlement dari backend tidak lengkap.");
+          throw new Error("Settlement payload from backend is incomplete.");
         }
         let txHash = String(payload.settlementTxHash || "");
         try {
@@ -1917,12 +1917,12 @@ export function GameBridgeClient({
             txHash = String(submit?.txHash || "");
           }
           if (!txHash) {
-            throw new Error("Settlement tx hash belum tersedia.");
+            throw new Error("Settlement tx hash is not available yet.");
           }
         } catch (error) {
           void refreshPlayBlockerStatus();
           throw new Error(
-            normalizeError(error, "Settlement cash out gagal diproses backend."),
+            normalizeError(error, "Failed to process cash out settlement on backend."),
           );
         }
 
@@ -1967,12 +1967,12 @@ export function GameBridgeClient({
             txHash = String(submit?.txHash || "");
           }
           if (!txHash) {
-            throw new Error("Settlement tx hash belum tersedia.");
+            throw new Error("Settlement tx hash is not available yet.");
           }
         } catch (error) {
           void refreshPlayBlockerStatus();
           throw new Error(
-            normalizeError(error, "Settlement run gagal diproses backend."),
+            normalizeError(error, "Failed to process run settlement on backend."),
           );
         }
 

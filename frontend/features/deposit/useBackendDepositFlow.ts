@@ -13,7 +13,7 @@ export function useBackendDepositFlow(): DepositFlowViewModel {
   const hasBackendConfig = hasBackendApiConfig();
   const configMessage = useMemo(() => {
     if (!hasBackendConfig) {
-      return "Mode backend aktif tapi `NEXT_PUBLIC_BACKEND_API_URL` belum diisi.";
+      return "Backend mode is enabled but `NEXT_PUBLIC_BACKEND_API_URL` is not set.";
     }
     return "Mode backend siap. Tinggal sambungkan endpoint approve/deposit dari tim backend.";
   }, [hasBackendConfig]);
@@ -58,22 +58,22 @@ export function useBackendDepositFlow(): DepositFlowViewModel {
     disableWithdrawButton: true,
     onClaimFaucet: async () => {
       throw new Error(
-        `Backend mode belum diimplementasi. Set endpoint di ${BACKEND_API_URL || "frontend/.env.local"}.`
+        `Backend mode is not implemented yet. Set endpoint in ${BACKEND_API_URL || "frontend/.env.local"}.`
       );
     },
     onApprove: async () => {
       throw new Error(
-        `Backend mode belum diimplementasi. Set endpoint di ${BACKEND_API_URL || "frontend/.env.local"}.`
+        `Backend mode is not implemented yet. Set endpoint in ${BACKEND_API_URL || "frontend/.env.local"}.`
       );
     },
     onDeposit: async () => {
       throw new Error(
-        `Backend mode belum diimplementasi. Set endpoint di ${BACKEND_API_URL || "frontend/.env.local"}.`
+        `Backend mode is not implemented yet. Set endpoint in ${BACKEND_API_URL || "frontend/.env.local"}.`
       );
     },
     onWithdraw: async () => {
       throw new Error(
-        `Backend mode belum diimplementasi. Set endpoint di ${BACKEND_API_URL || "frontend/.env.local"}.`
+        `Backend mode is not implemented yet. Set endpoint in ${BACKEND_API_URL || "frontend/.env.local"}.`
       );
     },
     configMessage,

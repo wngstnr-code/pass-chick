@@ -114,27 +114,27 @@ export function toUserFacingWalletError(
 
   const combined = `${readErrorName(error)} ${rawMessage}`.toLowerCase();
   if (isUserRejectedWalletError(error)) {
-    return options.userRejectedMessage || "Permintaan dibatalkan di wallet.";
+    return options.userRejectedMessage || "Request was canceled in wallet.";
   }
 
   if (includesAny(combined, PENDING_REQUEST_PATTERNS)) {
     return (
       options.pendingRequestMessage ||
-      "Masih ada permintaan wallet yang belum selesai."
+      "There is still a pending wallet request."
     );
   }
 
   if (includesAny(combined, INSUFFICIENT_FUNDS_PATTERNS)) {
     return (
       options.insufficientFundsMessage ||
-      "Saldo gas wallet tidak cukup untuk transaksi."
+      "Wallet gas balance is insufficient for this transaction."
     );
   }
 
   if (includesAny(combined, NETWORK_PATTERNS)) {
     return (
       options.networkMessage ||
-      "Koneksi wallet atau RPC bermasalah. Coba lagi."
+      "Wallet or RPC connection is unstable. Please try again."
     );
   }
 

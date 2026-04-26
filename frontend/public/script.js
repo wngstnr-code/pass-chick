@@ -347,7 +347,7 @@ function formatBridgeError(error, fallback, userRejectedMessage) {
   const lower = message.toLowerCase();
 
   if (isUserRejectedBridgeError(error)) {
-    return userRejectedMessage || "Permintaan dibatalkan di wallet.";
+    return userRejectedMessage || "Request was canceled in wallet.";
   }
 
   if (
@@ -356,7 +356,7 @@ function formatBridgeError(error, fallback, userRejectedMessage) {
     lower.includes("request of type") ||
     lower.includes("user is already processing")
   ) {
-    return "Masih ada permintaan wallet yang belum selesai.";
+    return "There is still a pending wallet request.";
   }
 
   if (
@@ -365,7 +365,7 @@ function formatBridgeError(error, fallback, userRejectedMessage) {
     lower.includes("intrinsic gas too low") ||
     lower.includes("exceeds allowance")
   ) {
-    return "Saldo gas wallet tidak cukup untuk transaksi.";
+    return "Wallet gas balance is insufficient for this transaction.";
   }
 
   if (
@@ -379,7 +379,7 @@ function formatBridgeError(error, fallback, userRejectedMessage) {
     lower.includes("socket hang up") ||
     lower.includes("rpc")
   ) {
-    return "Koneksi wallet atau RPC bermasalah. Coba lagi.";
+    return "Wallet or RPC connection is unstable. Please try again.";
   }
 
   let simplified = message.split(/\r?\n/)[0]?.trim() || "";
@@ -559,7 +559,7 @@ async function startBet(stake) {
       const message = formatBridgeError(
         error,
         "Failed to start live bet.",
-        "Start bet dibatalkan di wallet.",
+        "Start bet was canceled in wallet.",
       );
       console.error("Failed to start live bet:", error);
       window.dispatchEvent(
@@ -664,12 +664,12 @@ async function cashOut(reason) {
       showBetHud(false);
       showBetPanel(true);
       const fallbackMessage = isUserRejectedBridgeError(error)
-        ? "Cash out dibatalkan di wallet. Selesaikan pending settlement lalu start bet lagi."
+        ? "Cash out was canceled in wallet. Resolve pending settlement, then start betting again."
         : "Failed to settle cashout.";
       const message = formatBridgeError(
         error,
         fallbackMessage,
-        "Cash out dibatalkan di wallet.",
+        "Cash out was canceled in wallet.",
       );
       keepStatusMessage = true;
       dispatchPlayStatus({
@@ -764,7 +764,7 @@ async function crashBet(reason) {
       const message = formatBridgeError(
         error,
         "Failed to settle crash.",
-        "Settlement run dibatalkan di wallet.",
+        "Run settlement was canceled in wallet.",
       );
       keepStatusMessage = true;
       dispatchPlayStatus({
@@ -2766,7 +2766,7 @@ function initBettingUI() {
 
       const bridge = getBridge();
       if (!bridge?.loadLeaderboard) {
-        throw new Error("Leaderboard bridge belum siap.");
+        throw new Error("Leaderboard bridge is not ready yet.");
       }
 
       const payload = await bridge.loadLeaderboard();
@@ -2818,7 +2818,7 @@ function initBettingUI() {
       if (leaderboardList) leaderboardList.innerHTML = "";
       if (leaderboardYourRank) leaderboardYourRank.innerText = "-";
       setLeaderboardStatus(
-        formatBridgeError(error, "Gagal memuat leaderboard."),
+        formatBridgeError(error, "Failed to load leaderboard."),
         true,
       );
     } finally {
@@ -2894,7 +2894,7 @@ function initBettingUI() {
         !bridge?.loadGameHistory ||
         !bridge?.loadPlayerTransactions
       ) {
-        throw new Error("Stats bridge belum siap.");
+        throw new Error("Stats bridge is not ready yet.");
       }
 
       const [playerStats, historyPayload, transactionPayload] =
@@ -2933,7 +2933,7 @@ function initBettingUI() {
       setStatsSummary(null);
       renderStatsEmpty("Could not load player stats.");
       setStatsStatus(
-        formatBridgeError(error, "Gagal memuat player stats."),
+        formatBridgeError(error, "Failed to load player stats."),
         true,
       );
     } finally {
@@ -3215,7 +3215,7 @@ function initBettingUI() {
     if (hasLiveBridge()) {
       const bridge = getBridge();
       if (!bridge?.depositToVault) {
-        setDepositStatus("Deposit bridge belum siap.", true);
+        setDepositStatus("Deposit bridge is not ready yet.", true);
         return;
       }
 
@@ -3246,8 +3246,8 @@ function initBettingUI() {
       } catch (error) {
         const message = formatBridgeError(
           error,
-          "Deposit gagal.",
-          "Deposit dibatalkan di wallet.",
+          "Deposit failed.",
+          "Deposit was canceled in wallet.",
         );
         setDepositStatus(message, true);
         dispatchPlayStatus({
@@ -3268,14 +3268,14 @@ function initBettingUI() {
     if (success) {
       void refreshDepositBalanceCard();
       closeDepositModal();
-    } else setDepositStatus("Deposit gagal.", true);
+    } else setDepositStatus("Deposit failed.", true);
   });
 
   depositFaucet?.addEventListener("click", async () => {
     if (hasLiveBridge()) {
       const bridge = getBridge();
       if (!bridge?.claimFaucet) {
-        setDepositStatus("Faucet bridge belum siap.", true);
+        setDepositStatus("Faucet bridge is not ready yet.", true);
         return;
       }
 
@@ -3289,7 +3289,7 @@ function initBettingUI() {
       });
       try {
         await bridge.claimFaucet();
-        setDepositStatus("Faucet claimed. Lanjut deposit ya.");
+        setDepositStatus("Faucet claimed. Continue to deposit.");
         dispatchPlayStatus({
           message: "FAUCET CLAIMED.",
           tone: "ready",
@@ -3299,8 +3299,8 @@ function initBettingUI() {
       } catch (error) {
         const message = formatBridgeError(
           error,
-          "Claim faucet gagal.",
-          "Claim faucet dibatalkan di wallet.",
+          "Faucet claim failed.",
+          "Faucet claim was canceled in wallet.",
         );
         setDepositStatus(message, true);
         dispatchPlayStatus({
@@ -3392,17 +3392,17 @@ function initBettingUI() {
           const available = await bridge.loadAvailableBalance();
           if (!isFinite(available) || available < stake) {
             showErrorToast(
-              `Vault balance kurang. Available $${(available || 0).toFixed(
+              `Insufficient vault balance. Available $${(available || 0).toFixed(
                 2,
-              )}. Deposit dulu.`,
+              )}. Deposit first.`,
             );
             return;
           }
         } catch (error) {
           const message = formatBridgeError(
             error,
-            "Gagal cek saldo vault.",
-            "Permintaan dibatalkan di wallet.",
+            "Failed to check vault balance.",
+            "Request was canceled in wallet.",
           );
           console.error("Failed to load available vault balance:", error);
           dispatchPlayStatus({
@@ -3490,7 +3490,7 @@ function initBettingUI() {
 
   window.addEventListener("chicken:start-bet-failed", (event) => {
     const message =
-      event?.detail?.message || "Start bet gagal. Silakan coba lagi.";
+      event?.detail?.message || "Start bet failed. Please try again.";
 
     const wasBetActive = bet.active;
     stopBetTicker();
@@ -3542,7 +3542,7 @@ function initBettingUI() {
   window.addEventListener("chicken:game-reconnect-expired", (event) => {
     const message =
       event?.detail?.message ||
-      "Koneksi ke server terlalu lama putus. Run dihentikan.";
+      "Connection to server was lost too long. Run stopped.";
 
     resetBetAfterReconnectFailure();
     initializeGame();

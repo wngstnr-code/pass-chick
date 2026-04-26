@@ -138,7 +138,7 @@ export function PlayTopNav() {
   function getBridgeApi() {
     const bridge = window.__CHICKEN_MONAD_BRIDGE__;
     if (!bridge || bridge.backgroundMode) {
-      throw new Error("Game bridge belum siap.");
+      throw new Error("Game bridge is not ready yet.");
     }
     return bridge;
   }
@@ -167,7 +167,7 @@ export function PlayTopNav() {
       const eligibility = status.eligibility;
       const message = eligibility?.eligible
         ? `ELIGIBLE TIER ${eligibility.tier} • READY TO CLAIM`
-        : (eligibility?.reason || "Belum eligible untuk passport.");
+        : (eligibility?.reason || "Not eligible for passport yet.");
       setPassportStatusText(message);
       dispatchStatusUpdate({
         message,
@@ -177,7 +177,7 @@ export function PlayTopNav() {
     } catch (error) {
       const message = readActionErrorMessage(
         error,
-        "Gagal cek passport status.",
+        "Failed to check passport status.",
       );
       setPassportStatusText(message);
       dispatchStatusUpdate({
@@ -213,7 +213,7 @@ export function PlayTopNav() {
     } catch (error) {
       const message = readActionErrorMessage(
         error,
-        "Claim passport gagal.",
+        "Failed to claim passport.",
       );
       setPassportStatusText(message);
       dispatchStatusUpdate({
@@ -241,7 +241,7 @@ export function PlayTopNav() {
       const bridge = window.__CHICKEN_MONAD_BRIDGE__;
       if (!bridge?.resolvePlayBlocker || !bridge?.getPlayBlocker) {
         dispatchStatusUpdate({
-          message: "Game bridge belum siap. Coba lagi sebentar.",
+          message: "Game bridge is not ready yet. Please try again shortly.",
           tone: "error",
           durationMs: 4200,
         });
@@ -264,7 +264,7 @@ export function PlayTopNav() {
         dispatchStatusUpdate({
           message: readActionErrorMessage(
             error,
-            "Gagal menyelesaikan previous bet.",
+            "Failed to resolve previous bet.",
           ),
           tone: "error",
           durationMs: 4200,

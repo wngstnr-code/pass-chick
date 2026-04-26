@@ -73,11 +73,11 @@ export function ManageMoneyPage() {
     ];
 
     if (walletPreset) {
-      presets.push({ label: "MAX WALLET", value: walletPreset });
+      presets.push({ label: "WALLET MAX", value: walletPreset });
     }
 
     if (vaultPreset) {
-      presets.push({ label: "MAX WITHDRAW", value: vaultPreset });
+      presets.push({ label: "VAULT MAX", value: vaultPreset });
     }
 
     return presets;
