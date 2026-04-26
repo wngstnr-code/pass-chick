@@ -178,7 +178,85 @@ function toStartSessionFailureMessage(error: unknown, fallback: string) {
   });
 }
 
+const PASSPORT_ERROR_SELECTOR_TO_MESSAGE: Record<string, string> = {
+  "0xbf18af43":
+    "Signer backend passport tidak valid. Minta admin cek signer contract.",
+  "0x870973b7":
+    "Wallet aktif tidak cocok dengan payload claim passport.",
+  "0xbca1a956": "Tier passport tidak valid dari backend.",
+  "0x45a4a1a9": "IssuedAt claim passport tidak valid.",
+  "0x5e23ca68": "Expiry claim passport tidak valid.",
+  "0x41ad2e5f":
+    "Signature passport sudah expired. Klik Claim Passport lagi untuk generate signature baru.",
+  "0x91cab504":
+    "Nonce claim passport sudah terpakai. Coba Claim Passport lagi.",
+  "0x5b1819a3":
+    "Signer backend tidak sinkron dengan signer passport on-chain. Minta admin update signer contract.",
+  "0x78c05879":
+    "Claim passport stale (issuedAt lama). Coba Claim Passport lagi.",
+  "0x8f470554": "Passport wallet ini sudah direvoke.",
+};
+
+function extractErrorSelector(error: unknown) {
+  const queue: unknown[] = [error];
+  const visited = new Set<object>();
+  const texts: string[] = [];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (typeof current === "string") {
+      texts.push(current);
+      continue;
+    }
+
+    if (!current || typeof current !== "object") {
+      continue;
+    }
+
+    if (visited.has(current)) {
+      continue;
+    }
+    visited.add(current);
+
+    const record = current as Record<string, unknown>;
+    for (const value of Object.values(record)) {
+      if (typeof value === "string") {
+        texts.push(value);
+      } else if (Array.isArray(value)) {
+        for (const item of value) {
+          if (typeof item === "string") {
+            texts.push(item);
+          } else if (item && typeof item === "object") {
+            queue.push(item);
+          }
+        }
+      } else if (value && typeof value === "object") {
+        queue.push(value);
+      }
+    }
+  }
+
+  for (const text of texts) {
+    const signatureMatch = text.match(/0x[a-fA-F0-9]{8}\b/);
+    if (signatureMatch?.[0]) {
+      return signatureMatch[0].toLowerCase();
+    }
+
+    const dataMatch = text.match(/0x[a-fA-F0-9]{10,}/);
+    if (dataMatch?.[0]) {
+      return dataMatch[0].slice(0, 10).toLowerCase();
+    }
+  }
+
+  return "";
+}
+
 function toPassportClaimFailureMessage(error: unknown, fallback: string) {
+  const selector = extractErrorSelector(error);
+  if (selector && PASSPORT_ERROR_SELECTOR_TO_MESSAGE[selector]) {
+    return PASSPORT_ERROR_SELECTOR_TO_MESSAGE[selector];
+  }
+
   const normalized = normalizeError(error, fallback).toLowerCase();
 
   if (normalized.includes("invalidsignaturesigner")) {
@@ -1538,6 +1616,7 @@ export function GameBridgeClient({
             ],
           });
         } catch (error) {
+          console.error("❌ claimWithSignature failed:", error);
           throw new Error(
             toPassportClaimFailureMessage(error, "Claim passport gagal."),
           );
