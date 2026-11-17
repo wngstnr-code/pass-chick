@@ -1,5 +1,9 @@
 # Pass Chick
 
+![award](https://img.shields.io/badge/%F0%9F%A5%87_1st_Place-Monad_Blitz_Jogja_Vol._1-FFD700)
+
+> 🥇 **1st Place** at **[Monad Blitz Jogja Vol. 1](https://luma.com/blitz-jogja-apr-2026)** (April 2026). Looking for the Celo version? See [PassChick](https://github.com/wngstnr-code/PassChick), Top 10 at Celo Proof of Ship.
+
 Pass Chick is a risk-reward arcade game built on Monad testnet with a backend-authoritative game flow.
 This repository is split into three main packages:
 
